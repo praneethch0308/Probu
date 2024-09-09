@@ -1,0 +1,25 @@
+/* Add this to your CSS file */
+.content-transition {
+    transition: 0.7s ease;
+}
+
+.sidebar-opened {
+    margin-left: 255px;
+}
+
+.sidebar-closed {
+    margin-left: 100px; 
+}
+
+
+.sidebar-container {
+    transition: width 0.7s;
+}
+
+.sidebar-container.opened {
+    width: 220px;
+}
+
+.sidebar-container.closed {
+  width:4rem;
+}

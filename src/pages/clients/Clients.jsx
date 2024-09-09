@@ -7,6 +7,7 @@ import Mainnav from "../../components/Mainnav";
 import ClientContext from "../../context/clients/ClientContext";
 import Aos from "aos";
 import "aos/dist/aos.css";
+import { useSidebar } from "../../context/sidebar/SidebarContext";
 
 function Client() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ function Client() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [clientsPerPage] = useState(5);
-
+const {isOpened}= useSidebar();
   const [open, setOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
 
@@ -36,7 +37,7 @@ function Client() {
     } else {
       navigate("/clients");
     }
-  }, [getClients, navigate]);
+  }, []);
 
   useEffect(() => {
     Aos.init({ duration: 1000 });
@@ -53,11 +54,11 @@ function Client() {
       <div className="pb-10">
         <Mainnav />
       </div>
-      <div className="flex justify-between">
+      <div>
         <Sidebar />
-        <div className="ml-20">
+        <div className={`content-transition  ${isOpened ? "sidebar-opened mr-5" : "sidebar-closed mr-5"}`}>
           <div className="flex justify-end pt-14 pb-2">
-            <div className="flex space-x-4 items-center mr-20">
+            <div className="flex space-x-4 items-center mr-2">
             <input
                 type="text"
                 placeholder="Search..."
@@ -80,10 +81,10 @@ function Client() {
             </div>
           </div>
           <div className="pt-10 p-5">
-            <table className="w-2/3 table-auto shadow-md">
+            <table className="w-full table-auto shadow-md">
               <thead className="bg-black rounded-t-lg">
                 <tr>
-                  <th className="text-white px-5 ">Image</th>
+                  <th className="text-white py-3 px-5 ">Image</th>
                   <th className="text-white px-5 ">Status</th>
                   <th className="text-white px-5 ">Phone Number</th>
                   <th className="text-white px-5 ">Client Name</th>
@@ -128,7 +129,7 @@ function Client() {
                         <FaEye />
                       </button>
                       <button className="text-black hover:text-gray-800 p-2">
-                                                    <FaPencilAlt onClick={() => { navigate('/client-update') }} />
+                                                    <FaPencilAlt onClick={() => { navigate('/client-update',{ state: { client } }) }} />
                                                 </button>
                     </td>
                   </tr>

@@ -1,358 +1,294 @@
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
+  
+
+ 
+
+
+import React, { useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useState } from "react";
-import { FaSearch } from 'react-icons/fa';
+import { zodResolver } from "@hookform/resolvers/zod";
+import 'tailwindcss/tailwind.css';
 import Mainnav from "../../components/Mainnav";
 import Sidebar from "../../components/Sidebar";
+import EmployeeContext from "../../context/employees/EmployeeContext";
+import { Employee, EmployeeUpdatedata } from "../../context/employees/EmployeeState";
+import ClientContext from "../../context/clients/ClientContext";
+import ProjectContext from "../../context/projects/ProjectsContext";
+import { useSidebar } from "../../context/sidebar/SidebarContext";
+import axios from "axios";
 
-const EmployeeSchema = z.object({
-    firstName: z.string().min(1, "Firstname is required"),
-    middleName: z.string().optional(),
-    lastName: z.string().min(1, 'Lastname is required'),
-    DateofBirth: z.date('enter valid date'),
-    DateofJoining: z.date('enter valid date'),
-    phoneNumber: z.string()
-        .min(10, "*Contact mobile number must be 10 digits")
-        .max(10, "*Contact mobile number must be 10 digits"),
-    Email: z.string().email('enter valid email'),
-    Designation: z.string().min(1, 'Select Designation'),
-    Project: z.string().min(1, 'select project'),
-    TeamSelection: z.string().min(1, 'Select Team'),
-    Manager: z.string().min(1, 'select manager')
-})
+
+
 const EmployeeUpdate = () => {
-    const [formData, setFormData] = useState({
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        DateofBirth: '',
-        DateofJoining: '',
-        phoneNumber: '',
-        Email: '',
-        Designation: '',
-        Project: '',
-        TeamSelection: '',
-        Manager: '',
-    })
-    const [errors, setErrors] = useState({});
     const [selectedImage, setSelectedImage] = useState(null);
+    const orgId = localStorage.getItem('orgId');
+    const username = localStorage.getItem('loggedUser');
+  
+
+
+
     const navigate = useNavigate();
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        const { name, value } = e.target;
-        const phoneNumberPattern = /^\d{0,10}$/;
-
-        if (name === 'phoneNumber') {
-            if (phoneNumberPattern.test(value)) {
-                setFormData({
-                    ...formData,
-                    [name]: value
-                });
-
-                // Clear any previous error message
-                setErrors({
-                    ...errors,
-                    [name]: ''
-                });
-            } else {
-                setErrors({
-                    ...errors,
-                    [name]: 'Phone number must be 10 digits'
-                });
-            }
-        } else {
-            setFormData({
-                ...formData,
-                [name]: value
-            });
-        }
-    };
-
-    const handleImageChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setSelectedImage(URL.createObjectURL(e.target.files[0]));
-        }
-    };
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+    const context = useContext(EmployeeContext);
+    const { EmployeeInitData, initialData, empUpdate } = context;
+    const { designations = [], projects = [], teams = [] } = initialData || {};
+    const location = useLocation();
+    const {
+      state: { employee },
+    } = location;
+    const host = "http://157.245.110.240:8080/ProBuServices";
+    const accessToken= localStorage.getItem('token');
+    const {
+      register,
+      handleSubmit,
+      reset
+    } = useForm({
+      defaultValues: {
+        firstName: employee?.firstName || "", 
+        lastName: employee?.lastName || "", 
+        middleName:employee?.middleName||"",
+        DateofBirth: employee?.dob || "", 
+        DateofJoining: employee?.doj || "", 
+        phoneNumber: employee?.phoneNumber || "", 
+        Email: employee?.email || "", 
+        Designation: employee?.designation || "", 
+        Project: employee?.projects || 0, 
+        TeamSelection: employee?.teams || 0, 
+        IsManager: employee?.IsManager || "", 
+              
+      },
+    });
+  
+    useEffect(() => {
+      reset({
+        firstName: employee?.firstName || "", 
+        lastName: employee?.lastName || "", 
+        middleName:employee?.middleName||"",
+        DateofBirth: employee?.dob || "", 
+        DateofJoining: employee?.doj || "", 
+        phoneNumber: employee?.phoneNumber || "", 
+        Email: employee?.email || "", 
+        Designation: employee?.designation || "", 
+        Project: employee?.projects || 0, 
+        TeamSelection: employee?.teams || 0, 
+        IsManager: employee?.IsManager || "", 
+      });
+    }, [employee, reset]);
+ 
+    const onSubmit = async (data) => {
         try {
-            const validatedData = EmployeeSchema.parse(formData);
-            const accessToken = localStorage.getItem("token");
+            const empUpdateData = new EmployeeUpdatedata();
+                empUpdateData.emp.id=employee.id;
+                empUpdateData.emp.firstName= data.firstName;
+                empUpdateData.emp.middleName= data.middleName || '';
+                empUpdateData.emp.lastName= data.lastName;
+                empUpdateData.emp.empId= employee.empId;
+                empUpdateData.emp.empImageUrl=employee.empImageUrl;
+                empUpdateData.emp.dob= new Date(data.DateofBirth).toISOString().split('T')[0];
+                empUpdateData.emp.doj= new Date(data.DateofJoining).toISOString().split('T')[0];
+                empUpdateData.emp.phoneNumber= data.phoneNumber;
+                empUpdateData.emp.email= data.Email;
+                empUpdateData.emp.designation= data.Designation;
+                empUpdateData.emp.status= "Active";
+                empUpdateData.emp.manager= data.IsManager||false,
+                empUpdateData.emp.managerObjId= data.Manager || "";
+                empUpdateData.emp.managerName= data.Manager || "";
+                empUpdateData.emp.hourlyRate=employee.hourlyRate;
+                empUpdateData.emp.teams= [data.TeamSelection];
+                empUpdateData.emp.orgId= employee.orgId;
+                empUpdateData.emp.projects= [data.Project];
+                empUpdateData.emp.userObjId=employee.userObjId;
+                empUpdateData.username= username;
+                empUpdateData.orgId=orgId
+                console.log("Employee Create Data:", empUpdateData);
 
-            const response = await axios.post(
-                "http://157.245.110.240:8080/ProBuServices/employee/update",
-                validatedData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
+              
+    
+                const response = await axios.post(`${host}/employee/update?access_token=${accessToken}`,(empUpdateData),
+                 
 
-            console.log(response.data);
-            navigate("/employees");
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                setErrors(
-                    error.errors.reduce((acc, curr) => {
-                        acc[curr.path[0]] = curr.message;
-                        return acc;
-                    }, {})
+                 
                 );
-            } else {
-                console.error("Error creating formData:", error);
+                console.log('Response:', response);
+                setToast({ message: 'Employee updated successfully!', type: 'success' });
+                setTimeout(() => {
+                    navigate("/employees");
+                }, 2000);
+    
+         
             }
+
+
+        
+         catch (error) {
+            console.error('Error creating employee:', error);
         }
-    }
+    };
+
+    useEffect(() => {
+        if (localStorage.getItem('token')) {
+       
+       
+        
+          EmployeeInitData();
+        } else {
+          navigate("/projects");
+        }
+      }, []);
+
     return (
         <div>
             <div className="pb-10">
                 <Mainnav />
             </div>
             <div className="flex justify-between">
-                <div className="">
-                    <Sidebar />
-                </div>
-                <div className="mr-24 w-2/3 items-center">
-                    <div className="bg-gradient-to-r from-neutral-700 to-neutral-400 p-4 rounded-lg mt-10 w-full">
-                        <p className="text-center text-white stroke-black text-2xl font-bold">
-                            Employee-Update
-                        </p>
+                <Sidebar />
+                <div className="mr-8 md:mr-24 mt-10 w-2/3 items-center">
+                    <div className="bg-gradient-to-r from-black to-neutral-400 p-3 rounded-lg font-bold text-white text-center text-3xl">
+                        <p>EMPLOYEE UPDATE</p>
                     </div>
-                    <form className=" rounded-lg p-5 mt-4 bg-neutral-200" onSubmit={handleSubmit}>
-                        <div className="flex justify-between pt-5">
-                            <div>
-
-                                <input
+                    <form onSubmit={handleSubmit(onSubmit)} className="bg-neutral-300 p-4 rounded-lg mt-5 w-full">
+                        <div className="md:flex justify-between">
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">First Name</label>
+                                <input 
                                     type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2 justify-center"
-                                    placeholder="Enter the First Name "
+                                    {...register('firstName')}
+                                    className="w-full px-3 py-2 border rounded"
                                 />
-                                {errors.firstName && (
-                                    <p className="text-red-600 text-sm pl-1">{errors.firstName}</p>
-                                )}
+                            
                             </div>
-                            <div>
-
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Middle Name</label>
                                 <input
                                     type="text"
-                                    name="middlename"
-                                    value={formData.middleName}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2"
-                                    placeholder="Enter the Middle Name"
+                                    {...register('middleName')}
+                                    className="w-full px-3 py-2 border rounded"
                                 />
-                                {errors.middleName && (
-                                    <p className="text-red-600 text-sm pl-1">{errors.middleName}</p>
-                                )}
+                               
                             </div>
-                            <div>
-
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Last Name</label>
                                 <input
                                     type="text"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2 "
-                                    placeholder="Enter the Last Name"
+                                    {...register('lastName')}
+                                    className="w-full px-3 py-2 border rounded"
                                 />
-                                {errors.lastName && (
-                                    <p className="text-red-600 text-sm pl-1">{errors.lastName}</p>
-                                )}
+                             
                             </div>
                         </div>
-
-                        <div className="flex justify-between pt-5">
-                            <div>
-
+                        <div className="md:flex justify-between">
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Date of Birth</label>
                                 <input
                                     type="date"
-                                    name="DateofBirth"
-                                    value={formData.DateofBirth}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2"
-                                    placeholder="Date of Birth"
+                                    {...register('DateofBirth')}
+                                    className="w-full px-3 py-2 border rounded"
                                 />
-                                {errors.DateofBirth && (
-                                    <p className="text-red-600 text-sm pl-1">{errors.DateofBirth}</p>
-                                )}
+                               
                             </div>
-                            <div>
-
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Date of Joining</label>
                                 <input
                                     type="date"
-                                    name="DateofJoining"
-                                    value={formData.DateofJoining}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2"
-                                    placeholder="Date of Joining"
+                                    {...register('DateofJoining')}
+                                    className="w-full px-3 py-2 border rounded"
                                 />
-                                {errors.DateofJoining && (
-                                    <p className="text-red-600 text-sm pl-1">{errors.DateofJoining}</p>
-                                )}
+                               
                             </div>
-                            <div>
-
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Phone Number</label>
                                 <input
                                     type="text"
-                                    name="phoneNumber"
-                                    value={formData.phoneNumber}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2"
-                                    placeholder="Phone Number"
+                                    {...register('phoneNumber')}
+                                    className="w-full px-3 py-2 border rounded"
                                     maxLength={10}
-                                    pattern="\d*"
                                 />
-                                {errors.phoneNumber && (
-                                    <p className="text-red-600 text-sm pl-1">{errors.phoneNumber}</p>
-                                )}
+                               
                             </div>
                         </div>
-
-                        <div className="flex justify-between pt-5">
-                            <div>
-
+                        <div className="md:flex justify-between">
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Email ID</label>
                                 <input
                                     type="email"
-                                    name="Email"
-                                    value={formData.Email}
-                                    onChange={handleChange}
-                                    className="p-2 rounded border border-black ml-2"
-                                    placeholder="Email ID"
+                                    {...register('Email')}
+                                    className="w-full px-3 py-2 border rounded"
                                 />
-                                {errors.Email && (
-                                    <p className="text-red-600 text-sm pl-1">
-                                        {errors.Email}
-                                    </p>
-                                )}
+                             
                             </div>
-                            <div>
-
-                                <select
-                                    name="Designation"
-                                    value={formData.Designation}
-                                    onChange={handleChange}
-                                    className="p-2 px-9 rounded border border-black mr"
-                                >
-                                    <option value="" disabled>
-                                        Designation
-                                    </option>
-                                    <option value="Manager">Manager</option>
-                                    <option value="Salesmanager">Salesmanager</option>
-                                    <option value="Employee">Employee</option>
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Designation</label>
+                                <select {...register('Designation')} className="w-full px-3 py-2 border rounded">
+                                    <option value="" disabled>Select Designation</option>
+                                    {designations.map(designation => (
+                                        <option key={designation.listItem} value={designation.listItem}>{designation.listItem}</option>
+                                    ))}
                                 </select>
-                                {errors.Designation && (
-                                    <p className="text-red-600 text-sm pl-1">
-                                        {errors.Designation}
-                                    </p>
-                                )}
+                            
                             </div>
-                            <div>
-
-                                <select
-                                    name="Project"
-                                    value={formData.Project}
-                                    onChange={handleChange}
-                                    className="p-2 px-7 rounded border border-black mr"
-                                >
-                                    <option value="" disabled>
-                                        Project
-                                    </option>
-                                    <option value="Nike">Nike</option>
-                                    <option value="Weatherforecast">Weatherforecast</option>
-                                    <option value="Movieland">Movieland</option>
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Project</label>
+                                <select {...register('Project')} className="w-full px-3 py-2 border rounded">
+                                    <option value="" disabled>Select Project</option>
+                                    {projects.map(project => (
+                                        <option key={project.id} value={project.id}>{project.projectName}</option>
+                                    ))}
                                 </select>
-                                {errors.Project && (
-                                    <p className="text-red-600 text-sm pl-1">
-                                        {errors.Project}
-                                    </p>
-                                )}
+                               
                             </div>
                         </div>
-
-                        <div className="flex justify-between pt-5 ">
-                            <div>
-                                <select
-                                    name="TeamSelection"
-                                    value={formData.TeamSelection}
-                                    onChange={handleChange}
-                                    className="p-2 px-9 rounded border border-black ml-2 "
-                                >
-                                    <option value="" disabled>
-                                        Team Selection
-                                    </option>
-                                    <option value="jntuk">jntuk</option>
-                                    <option value="jntuh">jntuh</option>
+                        <div className="md:flex justify-between">
+                            <div className="mb-4 md:w-64 rounded-lg">
+                                <label className="block text-black">Team Selection</label>
+                                <select {...register('TeamSelection')} className="w-full px-3 py-2 border rounded">
+                                    <option value="" disabled>Select Team</option>
+                                    {teams.map(team => (
+                                        <option key={team.id} value={team.id}>{team.teamName}</option>
+                                    ))}
                                 </select>
-                                {errors.TeamSelection && (
-                                    <p className="text-red-600 text-sm pl-1">
-                                        {errors.TeamSelection}
-                                    </p>
-                                )}
+                               
                             </div>
-                            <div >
-
-                                <input
-                                    type="text"
-                                    name="Manager"
-                                    value={formData.Manager}
-                                    onChange={handleChange}
-                                    className="p-2  rounded border border-black mr-44"
-                                    placeholder=""
-                                />
-                                {errors.Manager && (
-                                    <p className="text-red-600 text-sm pl-1">
-                                        {errors.Manager}
-                                    </p>
-                                )}
-                            </div>
-                            <div>
-                                <FaSearch className=' flex h-8 w-5  ' />
-                            </div>
-
-                        </div>
-                        <div className="flex justify-center p-4">
-                            <div>
-                                <input type="checkbox" />
-                                <label>Is Manager</label>
-                            </div>
-                            <div className="pt-4 ml-10">
-                                <label htmlFor="logoInput" className="bg-black p-2 hover:bg-white text-white hover:text-black w-36 h-8 rounded-lg cursor-pointer">
-                                    Choose Image
-                                </label>
-                                <input
-                                    id="logoInput"
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageChange}
-                                />
+                            <div className="mb-4 md:w-64 rounded-lg ml-5">
+                                <label className="block text-black">Manager</label>
+                                <div className="flex items-center">
+                                    <input
+                                        type="text"
+                                        {...register('Manager')}
+                                        className="w-full px-3 py-2 border rounded"
+                                    />
+                                    <div className="flex items-center ml-2">
+                                        <input
+                                            type="checkbox"
+                                            {...register('IsManager')}
+                                            className="mr-2"
+                                        />
+                                        <label className="text-black">Is Manager</label>
+                                    </div>
+                                </div>
+                             
                             </div>
                         </div>
-
-                        <div className="flex justify-evenly mt-3">
-                            <button
-                                className="bg-black hover:bg-white hover:text-black text-white w-36 h-8 rounded-lg"
-                                type="submit" onClick={handleSubmit}
-                            >
-                                Update
-                            </button>
-                            <button
-                                className="bg-black hover:bg-white hover:text-black text-white w-36 h-8 rounded-lg"
-                                onClick={() => navigate("/tasks")}
-                            >
-                                Cancel
-                            </button>
+                        {/* <div className="mb-4">
+                            <label className="ml-4">Choose Image</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="w-full px-3 py-2 border rounded"
+                            />
+                            {selectedImage && <img src={selectedImage} alt="Profile Preview" className="w-24 h-24 mt-4" />}
+                        </div> */}
+                        <div className="flex justify-center">
+                            <button type="submit" className="mr-40 p-2 rounded-md justify-center bg-black hover:bg-white hover:text-black text-white py-2">Update Employee</button>
+                            <button type="button" onClick={() => navigate('/employees')} className="p-2 bg-black hover:bg-white hover:text-black text-white py-2 rounded-md">Cancel</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    )
+    );
 }
-export default EmployeeUpdate
+
+export default EmployeeUpdate;

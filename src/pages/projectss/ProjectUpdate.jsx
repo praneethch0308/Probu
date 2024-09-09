@@ -1,251 +1,359 @@
-import React, { useContext, useEffect, useState } from 'react';
-import axios from 'axios';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import 'tailwindcss/tailwind.css';
-import Mainnav from '../../components/Mainnav';
-import Sidebar from '../../components/Sidebar';
-import ClientContext from '../../context/clients/ClientContext';
-import { useNavigate } from 'react-router-dom';
-import ProjectContext from '../../context/projects/ProjectsContext';
-
-
-const projectSchema = z.object({
-    projName: z.string().min(1, 'Project name is required'),
-    vertical: z.string().min(1, 'Vertical is required'),
-    projStatus: z.string().min(1, 'Project status is required'),
-    description: z.string().min(1, 'Description is required'),
-    leadCreator: z.string().min(1, 'Lead creator is required'),
-    clientObjId: z.string().min(1, 'Client is required'),
-    projManager: z.string().min(1, 'Project manager is required'),
-    projCost: z.number().min(0, 'Project cost must be a positive number'),
-    allocatedBudget: z.number().min(0, 'Allocated budget must be a positive number'),
-    spentBudget: z.number().min(0, 'Spent budget must be a positive number'),
-    gstAmt: z.number().min(0, 'GST amount must be a positive number'),
-    startDate: z.string().refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date' }),
-    endDate: z.string().refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date' }),
-    actualEndDate: z.string().refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date' }),
-    spentBudgetGst: z.number().optional()
-});
+import React, { useContext, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import Mainnav from "../../components/Mainnav";
+import Sidebar from "../../components/Sidebar";
+import ProjectContext from "../../context/projects/ProjectsContext";
+import ClientContext from "../../context/clients/ClientContext";
+import EmployeeContext from "../../context/employees/EmployeeContext";
+import { useSidebar } from "../../context/sidebar/SidebarContext";
+import { ProjectData } from "../../context/projects/ProjectState";
+import { format } from 'date-fns';
+import axios from "axios";
+import ToastNotification from "../../components/ToastNotification";
 
 const ProjectUpdate = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm({
-        resolver: zodResolver(projectSchema),
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { state: { project, id } } = location;
+
+  const [toast, setToast] = useState({ message: '', type: '' });
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: {
+      projName: project?.projectName || "", 
+      vertical: project?.vertical || "", 
+      projStatus: project?.status || "", 
+      description: project?.projectDescription || "", 
+      leadCreator: project?.leadCreator || "", 
+      clientObjId: project?.clientObjId || "", 
+      projManager: project?.projectManager || "", 
+      projCost: project?.projCost || 0, 
+      gstAmt: project?.gstAmt || 0, 
+      startDate: project?.startDate || "", 
+      endDate: project?.endDate || "", 
+      actualEndDate: project?.actualEndDate || "", 
+      allocatedBudget: project?.allocatedBudget || 0, 
+      spentBudget: project?.spentBudget || 0, 
+      spentBudgetGst: project?.spentBudgetGst || 0
+    },
+  });
+  const host = "http://157.245.110.240:8080/ProBuServices";
+  const orgId= localStorage.getItem('orgId');
+  const username= localStorage.getItem('loggedUser');
+  useEffect(() => {
+    reset({
+      projName: project?.projectName || "", 
+      vertical: project?.vertical || "", 
+      projStatus: project?.status || "", 
+      description: project?.projectDescription || "", 
+      leadCreator: project?.leadCreator || "", 
+      clientObjId: project?.clientObjId || "", 
+      projManager: project?.projectManager || "", 
+      projCost: project?.projCost || 0, 
+      gstAmt: project?.gstAmt || 0, 
+      startDate: project?.startDate || "", 
+      endDate: project?.endDate || "", 
+      actualEndDate: project?.actualEndDate || "", 
+      allocatedBudget: project?.allocatedBudget || 0, 
+      spentBudget: project?.spentBudget || 0, 
+      spentBudgetGst: project?.spentBudgetGst || 0
     });
+  }, [project, reset]);
 
+  const ProjectForm= new ProjectData();
 
-    const [employees, setEmployees] = useState([]);
-    const navigate = useNavigate();
-    const host = "http://157.245.110.240:8080/ProBuServices/project/update";
+  const onSubmit = async (data,e) => {
+    e.preventDefault();
+    try {
+        ProjectForm.project.id=project.id;
+        ProjectForm.project.projectName=data.projName;
+        ProjectForm.project.vertical=data.vertical;
+        ProjectForm.project.projectCode=project.projectCode
+        ProjectForm.project.projectDescription= data.description;
+        ProjectForm.project.projectStatus= data.projStatus;
+        ProjectForm.project.leadCreator= data.leadCreator;
+        ProjectForm.project.clientObjId = data.clientObjId;
+        ProjectForm.project.projectManager= data.projManager;
+        ProjectForm.project.empObjId= data.projManager;
+        ProjectForm.project.projectCost= data.projCost.toString();
+        ProjectForm.project.gstAmt= data.gstAmt.toString();
+         const stDate= format(new Date(data.startDate), 'yyyy-MM-dd');
+        ProjectForm.project.startDate = stDate;
+        const endDt =format(new Date(data.endDate), 'yyyy-MM-dd');
+          ProjectForm.project.endDate = endDt;
+        const actualEndDt = format(new Date(data.actualEndDate), 'yyyy-MM-dd');
+          ProjectForm.project.actualEndDate = actualEndDt;
+          ProjectForm.project.allocatedBudget = data.allocatedBudget.toString();
+          ProjectForm.project.spentBudget = data.spentBudget.toString();
+          ProjectForm.project.spentBudgetGst = data.spentBudgetGst.toString();
+          ProjectForm.project.leadCreatorObjId = data.leadCreator;
+          ProjectForm.project.orgId = orgId;
+          const actTime =format(new Date(), 'yyyy-MM-dd');
+          ProjectForm.actionTime = actTime;
+          ProjectForm.loggedInUsername = username;
+          ProjectForm.orgId = orgId;
+ console.log(ProjectForm);
+      
+      const access_token = localStorage.getItem('token');
+      if (!access_token) {
+        throw new Error('Access token not found');
+      }
+      console.log('Access Token:', access_token); 
+      const response = await axios.post(`${host}/project/update?access_token=${access_token}`,ProjectForm,
+        {
+          headers: {
+            'Content-Type':'application/json',
 
-    const context1 = useContext(ClientContext);
-    const { clients, getClients } = context1;
-    const context2 = useContext(ProjectContext);
-    const { ProjectInitData, initData } = context2;
-    const statuses = initData.statuses;
-    const verticals = initData.verticals;
-    useEffect(() => {
-        if (localStorage.getItem('token')) {
-            getClients();
-        } else {
-            navigate("/projects");
+            
+          },
         }
-    }, [getClients, navigate]);
+      );
+      console.log('Project updated successfully', response.data);
+      setToast({ message: 'Project updated successfully!', type: 'success' });
+      setTimeout(() => {
+          navigate("/projects");
+      }, 2000);
+    } catch (error) {
+      console.error('Error updating project', error.response ? error.response.data : error.message);
+    }
+  };
 
-    useEffect(() => {
-        if (localStorage.getItem('token')) {
-            ProjectInitData();
+  const clientContext = useContext(ClientContext);
+  const { clients, getClients } = clientContext;
 
-        } else {
-            navigate("/projects");
-        }
-    }, [initData, navigate]);
+  const projectContext = useContext(ProjectContext);
+  const { ProjectInitData, initData } = projectContext;
 
+  const statuses = initData?.statuses || [];
+  const verticals = initData?.verticals || [];
 
+  const employeeContext = useContext(EmployeeContext);
+  const { employees, getEmployees } = employeeContext;
 
+  const { isOpened } = useSidebar();
 
-    const onSubmit = async (data) => {
-        try {
-            const accessToken = localStorage.getItem('token');
-            const response = await axios.post(`${host}/ProBuServices/project/create`, data, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            console.log('Project created successfully', response.data);
-        } catch (error) {
-            console.error('Error creating project', error.response ? error.response.data : error.message);
-        }
-    };
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      ProjectInitData();
+      getClients();
+      getEmployees();
+    } else {
+      navigate("/projects");
+    }
+  }, []);
 
-
-    return (
-        <div>
-            <div className="pb-10">
-                <Mainnav />
+  return (
+    <>
+      <div className="pb-10">
+        <Mainnav />
+      </div>
+      <div className="flex justify-between">
+        <Sidebar />
+        <div className={`content-transition mr-8 md:mr-24 mt-10 w-2/3 items-center mb-5`}>
+          <div className="bg-gradient-to-r from-black to-neutral-400 p-3 rounded-lg font-bold text-white text-center text-3xl">
+            <p>PROJECT UPDATE</p>
+          </div>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="bg-neutral-300 p-4 rounded-lg mt-5 w-full"
+          >
+            <div className="md:flex justify-between">
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label htmlFor="projName">Project Name</label>
+                <input
+                  type="text"
+                  id="projName"
+                  {...register("projName", { required: "Project Name is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.projName ? "border-red-500" : ""}`}
+                />
+                {errors.projName && <p className="text-red-500">{errors.projName.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label htmlFor="vertical">Vertical</label>
+                <select
+                  id="vertical"
+                  {...register("vertical", { required: "Vertical is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.vertical ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Vertical</option>
+                  {verticals.map((vertical) => (
+                    <option key={vertical.listItem} value={vertical.listItem}>
+                      {vertical.listItem}
+                    </option>
+                  ))}
+                </select>
+                {errors.vertical && <p className="text-red-500">{errors.vertical.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label htmlFor="projStatus">Project Status</label>
+                <select
+                  id="projStatus"
+                  {...register("projStatus", { required: "Project Status is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.projStatus ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Project Status</option>
+                  {statuses.map((status) => (
+                    <option key={status.listItem} value={status.listItem}>
+                      {status.listItem}
+                    </option>
+                  ))}
+                </select>
+                {errors.projStatus && <p className="text-red-500">{errors.projStatus.message}</p>}
+              </div>
             </div>
-            <div className="flex justify-between">
-                <Sidebar />
-                <div className="mr-8 md:mr-24 mt-10 w-2/3 items-center">
-                    <div className="bg-gradient-to-r from-black to-neutral-400 p-3 rounded-lg font-bold text-white text-center text-3xl">
-                        <p>PROJECT UPDATE</p>
-                    </div>
-                    <form onSubmit={handleSubmit(onSubmit)} className="bg-neutral-300 p-4 rounded-lg mt-5 w-full">
-                        <div className="md:flex justify-between">
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Project Name</label>
-                                <input
-                                    type="text"
-                                    {...register('projName')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.projName && <p className="text-red-500 text-sm">{errors.projName.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Vertical</label>
-                                <select {...register('vertical')} className="w-full px-3 py-2 border rounded">
-                                    <option value="" selected disabled>Select Vertical</option>
-                                    {Array.isArray(verticals) && verticals.map(vertical => (
-                                        <option key={vertical.listItem} value={vertical.listItem}>{vertical.listItem}</option>
-                                    ))}
-                                </select>
-                                {errors.vertical && <p className="text-red-500 text-sm">{errors.vertical.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Project Status</label>
-                                <select {...register('projStatus')} className="w-full px-3 py-2 border rounded">
-                                    <option value="" selected disabled>Select Project Status</option>
-                                    {Array.isArray(statuses) && statuses.map(status => (
-                                        <option key={status.listItem} value={status.listItem}>{status.listItem}</option>
-                                    ))}
-                                </select>
-                                {errors.projStatus && <p className="text-red-500 text-sm">{errors.projStatus.message}</p>}
-                            </div>
-                        </div>
-                        <div className="mb-4 rounded-lg">
-                            <label className="block text-black">Description</label>
-                            <textarea
-                                {...register('description')}
-                                className="w-full px-3 py-2 border rounded"
-                            />
-                            {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
-                        </div>
-                        <div className="md:flex justify-between">
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Lead Creator</label>
-                                <input
-                                    type="text"
-                                    {...register('leadCreator')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.leadCreator && <p className="text-red-500 text-sm">{errors.leadCreator.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Client</label>
-                                <select {...register('clientObjId')} className="w-full px-3 py-2 border rounded">
-                                    <option value="" disabled>Select Client</option>
-                                    {clients.map(client => (
-                                        <option key={client.clientName} value={client.clientName}>{client.clientName}</option>
-                                    ))}
-                                </select>
-                                {errors.clientObjId && <p className="text-red-500 text-sm">{errors.clientObjId.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Project Manager</label>
-                                <select {...register('projManager')} className="w-full px-3 py-2 border rounded">
-                                    <option value="" disabled>Select Project Manager</option>
-                                    {employees.map(employee => (
-                                        <option key={employee.id} value={employee.id}>{employee.name}</option>
-                                    ))}
-                                </select>
-                                {errors.projManager && <p className="text-red-500 text-sm">{errors.projManager.message}</p>}
-                            </div>
-                        </div>
-                        <div className="md:flex justify-between">
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Project Cost</label>
-                                <input
-                                    type="number"
-                                    {...register('projCost')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.projCost && <p className="text-red-500 text-sm">{errors.projCost.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Allocated Budget</label>
-                                <input
-                                    type="number"
-                                    {...register('allocatedBudget')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.allocatedBudget && <p className="text-red-500 text-sm">{errors.allocatedBudget.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Spent Budget</label>
-                                <input
-                                    type="number"
-                                    {...register('spentBudget')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.spentBudget && <p className="text-red-500 text-sm">{errors.spentBudget.message}</p>}
-                            </div>
-                        </div>
-                        <div className="md:flex justify-between">
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">GST Amount</label>
-                                <input
-                                    type="number"
-                                    {...register('gstAmt')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.gstAmt && <p className="text-red-500 text-sm">{errors.gstAmt.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Spent Budget GST</label>
-                                <input
-                                    type="number"
-                                    {...register('spentBudgetGst')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.spentBudgetGst && <p className="text-red-500 text-sm">{errors.spentBudgetGst.message}</p>}
-                            </div>
-                        </div>
-                        <div className="md:flex">
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Start Date</label>
-                                <input
-                                    type="date"
-                                    {...register('startDate')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.startDate && <p className="text-red-500 text-sm">{errors.startDate.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">End Date</label>
-                                <input
-                                    type="date"
-                                    {...register('endDate')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.endDate && <p className="text-red-500 text-sm">{errors.endDate.message}</p>}
-                            </div>
-                            <div className="mb-4 md:w-64 rounded-lg">
-                                <label className="block text-black text-center">Actual End Date</label>
-                                <input
-                                    type="date"
-                                    {...register('actualEndDate')}
-                                    className="w-full px-3 py-2 border rounded"
-                                />
-                                {errors.actualEndDate && <p className="text-red-500 text-sm">{errors.actualEndDate.message}</p>}
-                            </div>
-                        </div>
-                        <button type="submit" className="w-full bg-black hover:bg-white hover:text-black text-white py-2 rounded">Update Project</button>
-                    </form>
-                </div>
+            <div className="mb-4 rounded-lg">
+              <label className="block text-black" htmlFor="description">Description</label>
+              <textarea
+                id="description"
+                {...register("description", { required: "Description is required" })}
+                className={`w-full px-3 py-2 border rounded ${errors.description ? "border-red-500" : ""}`}
+              />
+              {errors.description && <p className="text-red-500">{errors.description.message}</p>}
             </div>
+            <div className="md:flex justify-between">
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black " htmlFor="leadCreator">Lead Creator</label>
+                <select
+                  id="leadCreator"
+                  {...register("leadCreator", { required: "Lead Creator is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.leadCreator ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Lead Creator</option>
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.firstName}
+                    </option>
+                  ))}
+                </select>
+                {errors.leadCreator && <p className="text-red-500">{errors.leadCreator.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black " htmlFor="clientObjId">Client</label>
+                <select
+                  id="clientObjId"
+                  {...register("clientObjId", { required: "Client is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.clientObjId ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Client</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>{client.clientName}</option>
+                  ))}
+                </select>
+                {errors.clientObjId && <p className="text-red-500">{errors.clientObjId.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black " htmlFor="projManager">Project Manager</label>
+                <select
+                  id="projManager"
+                  {...register("projManager", { required: "Project Manager is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.projManager ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Project Manager</option>
+                  {employees.map((employee) => (
+                    <option  key={employee.id} value={employee.firstName}>
+                      {employee.firstName} {employee.lastName}
+                    </option>
+                  ))}
+                </select>
+                {errors.projManager && <p className="text-red-500">{errors.projManager.message}</p>}
+              </div>
+            </div>
+            <div className="md:flex justify-between">
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="projCost">Project Cost</label>
+                <input
+                  type="number"
+                  id="projCost"
+                  {...register("projCost", { required: "Project Cost is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.projCost ? "border-red-500" : ""}`}
+                />
+                {errors.projCost && <p className="text-red-500">{errors.projCost.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="gstAmt">GST Amount</label>
+                <input
+                  type="number"
+                  id="gstAmt"
+                  {...register("gstAmt", { required: "GST Amount is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.gstAmt ? "border-red-500" : ""}`}
+                />
+                {errors.gstAmt && <p className="text-red-500">{errors.gstAmt.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="startDate">Start Date</label>
+                <input
+                  type="date"
+                  id="startDate"
+                  {...register("startDate", { required: "Start Date is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.startDate ? "border-red-500" : ""}`}
+                />
+                {errors.startDate && <p className="text-red-500">{errors.startDate.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="endDate">End Date</label>
+                <input
+                  type="date"
+                  id="endDate"
+                  {...register("endDate", { required: "End Date is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.endDate ? "border-red-500" : ""}`}
+                />
+                {errors.endDate && <p className="text-red-500">{errors.endDate.message}</p>}
+              </div>
+            </div>
+            <div className="md:flex justify-between">
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="actualEndDate">Actual End Date</label>
+                <input
+                  type="date"
+                  id="actualEndDate"
+                  {...register("actualEndDate", { required: "Actual End Date is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.actualEndDate ? "border-red-500" : ""}`}
+                />
+                {errors.actualEndDate && <p className="text-red-500">{errors.actualEndDate.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="allocatedBudget">Allocated Budget</label>
+                <input
+                  type="number"
+                  id="allocatedBudget"
+                  {...register("allocatedBudget", { required: "Allocated Budget is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.allocatedBudget ? "border-red-500" : ""}`}
+                />
+                {errors.allocatedBudget && <p className="text-red-500">{errors.allocatedBudget.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="spentBudget">Spent Budget</label>
+                <input
+                  type="number"
+                  id="spentBudget"
+                  {...register("spentBudget", { required: "Spent Budget is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.spentBudget ? "border-red-500" : ""}`}
+                />
+                {errors.spentBudget && <p className="text-red-500">{errors.spentBudget.message}</p>}
+              </div>
+              <div className="mb-4 md:w-64 rounded-lg">
+                <label className="block text-black" htmlFor="spentBudgetGst">Spent Budget GST</label>
+                <input
+                  type="number"
+                  id="spentBudgetGst"
+                  {...register("spentBudgetGst", { required: "Spent Budget GST is required" })}
+                  className={`w-full px-3 py-2 border rounded ${errors.spentBudgetGst ? "border-red-500" : ""}`}
+                />
+                {errors.spentBudgetGst && <p className="text-red-500">{errors.spentBudgetGst.message}</p>}
+              </div>
+            </div>
+            <div className="flex justify-center mt-4">
+              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+                Update Project
+              </button>
+            </div>
+          </form>
+          <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
         </div>
-    );
+      </div>
+    </>
+  );
 };
 
-export default ProjectUpdate
+export default ProjectUpdate;

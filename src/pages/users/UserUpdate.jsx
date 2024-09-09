@@ -1,63 +1,46 @@
 import { useNavigate } from "react-router-dom";
-
 import { z } from 'zod';
-import { useState } from "react";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from "react-hook-form";
 import axios from "axios";
 import Mainnav from "../../components/Mainnav";
 import Sidebar from "../../components/Sidebar";
 
-
 const UserSchema = z.object({
     userUsername: z.string(),
     userFullName: z.string().min(1, "Enter your full name")
-})
-
+});
 
 function UserUpdate() {
+    const navigate = useNavigate();
 
-    const [formData, setformData] = useState({
-        userUsername: "",
-        userFullName: ""
-    })
-    const [errors, setErrors] = useState({});
+    const {
+        register,
+        handleSubmit,
+        formState: { errors }
+    } = useForm({
+        resolver: zodResolver(UserSchema)
+    });
 
-    const handleChange = (e) => {
-        setformData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (formData) => {
         try {
-            const validatedData = UserSchema.parse(formData);
             const accessToken = localStorage.getItem("token");
 
             const response = await axios.post(
-                "http://157.245.110.240:8080/ProBuServices/user/update",
-                validatedData,
+                `http://157.245.110.240:8080/ProBuServices/user/update?access_token=${accessToken}`,
+                formData,
                 {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
+                   
                 }
             );
 
             console.log(response.data);
             navigate("/user");
         } catch (error) {
-            if (error instanceof z.ZodError) {
-                setErrors(
-                    error.errors.reduce((acc, curr) => {
-                        acc[curr.path[0]] = curr.message;
-                        return acc;
-                    }, {})
-                );
-            } else {
-                console.error("Error updating user:", error);
-            }
+            console.error("Error updating user:", error);
         }
     };
 
-    const navigate = useNavigate();
     return (
         <>
             <div className="pb-10">
@@ -71,20 +54,18 @@ function UserUpdate() {
                     <div className="text-center text-4xl w-full p-5 bg-gradient-to-r from-black to-neutral-400 py-4 rounded-md">
                         <h1 className="text-white font-semibold">User Update</h1>
                     </div>
-                    <div className=" bg-neutral-300 p-5 mt-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="bg-neutral-300 p-5 mt-4">
                         <div className="flex justify-between rounded-md mt-6">
                             <div className="w-1/3 mr-4 ">
-                                <input
+                                <input disabled
                                     type="text"
                                     className="p-2 rounded-lg w-64"
                                     placeholder="Username"
-                                    name="userUsername"
-                                    value={formData.userUsername}
-                                    onChange={handleChange}
+                                    {...register("userUsername")}
                                 />
-                                {errors.clientName && (
+                                {errors.userUsername && (
                                     <p className="text-red-600 text-sm pl-8">
-                                        {errors.clientName}
+                                        {errors.userUsername.message}
                                     </p>
                                 )}
                             </div>
@@ -94,21 +75,20 @@ function UserUpdate() {
                                     type="text"
                                     className="p-2 rounded-lg w-64"
                                     placeholder="Fullname"
-                                    name="userFullName"
-                                    value={formData.userFullName}
-                                    onChange={handleChange}
+                                    {...register("userFullName")}
                                 />
-                                {errors.clientName && (
+                                {errors.userFullName && (
                                     <p className="text-red-600 text-sm pl-8">
-                                        {errors.clientName}
+                                        {errors.userFullName.message}
                                     </p>
                                 )}
                             </div>
+
                             <div className="w-1/3">
                                 <select
-                                    type="text"
                                     className="p-2 rounded-lg w-64"
-                                    placeholder="Roles" required
+                                    placeholder="Roles"
+                                    {...register("userRole", { required: true })}
                                 >
                                     <option disabled selected>Select Role</option>
                                     <option value="admin">ADMIN</option>
@@ -116,19 +96,18 @@ function UserUpdate() {
                             </div>
                         </div>
                         <label className="flex items-center space-x-2 mt-3">
-                            <input type="checkbox" className="form-checkbox" />
+                            <input disabled type="checkbox" defaultChecked className="form-checkbox" />
                             <span>Org User</span>
                         </label>
-                        <div className="flex justify-evenly">
-                            <button className="bg-black w-36 text-white hover:bg-neutral-700  h-8 rounded-lg" onClick={handleSubmit}>
+                        <div className="flex justify-evenly mt-4">
+                            <button type="submit" className="bg-black w-36 text-white hover:bg-neutral-700 h-8 rounded-lg">
                                 Save
                             </button>
-                            <button className="bg-black w-36 text-white hover:bg-neutral-700  h-8 rounded-lg" onClick={() => { navigate('/user') }}>
+                            <button type="button" className="bg-black w-36 text-white hover:bg-neutral-700 h-8 rounded-lg" onClick={() => { navigate('/user') }}>
                                 Cancel
                             </button>
                         </div>
-                    </div>
-
+                    </form>
                 </div>
             </div>
         </>

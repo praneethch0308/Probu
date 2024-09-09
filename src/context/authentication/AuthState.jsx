@@ -32,6 +32,13 @@ export class UserSecurity {
     policies = new Systempolicy();
 }
 
+export class PasswordUpdateData {
+    username = '';
+    currentPassword = '';
+    newPassword = '';
+    orgId = '';
+}
+
 const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem('currentUser')) || null);
     const [isLoggedIn, setIsLoggedIn] = useState(!!currentUser);
@@ -73,6 +80,7 @@ const AuthProvider = ({ children }) => {
                 localStorage.setItem('token',token);
                 setCurrentUser(user);
                 console.log(user);
+                
             }
             return user;
         } catch (error) {
@@ -89,11 +97,11 @@ const AuthProvider = ({ children }) => {
         history('/');
     };
 
-    const getUserSecurityData = async (username) => {
+    const getUserSecurityData = async (username,token) => {
         try {
             const response = await axios.get(`${host}/user/security/${username}`, {
                 headers: {
-                    Authorization: `Bearer ${accessToken}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
             return response.data;

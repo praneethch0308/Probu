@@ -9,11 +9,13 @@ import EmployeeContext from "../../context/employees/EmployeeContext";
 import Aos from "aos";
 import "aos/dist/aos.css";
 import { MdCancel, MdOutlineFileDownload } from "react-icons/md";
+import { useSidebar } from "../../context/sidebar/SidebarContext";
+import ExportToExcelButton from "../../components/ExcelButton";
 
 const Employees = () => {
   const context = useContext(EmployeeContext);
   const { employees, getEmployees } = context;
-
+const {isOpened}= useSidebar();
   const [open, setOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
@@ -26,19 +28,22 @@ const Employees = () => {
     setSelectedEmployee(null);
   };
 
+  
   const handleViewEmployee = (employee) => {
     setSelectedEmployee(employee);
     onOpenModal();
   };
 
   const navigate = useNavigate();
-  useEffect(() => {
-    if (localStorage.getItem("token")) {
-      getEmployees();
-    } else {
-      navigate("/");
-    }
-  }, [getEmployees, navigate]);
+useEffect(()=>{
+  if (localStorage.getItem("token")) {
+    getEmployees();
+  } else {
+    navigate("/");
+  }
+},[])
+   
+ 
 
   useEffect(() => {
     Aos.init({ duration: 1000 });
@@ -58,40 +63,35 @@ const Employees = () => {
         <div className="pb-10">
           <Mainnav />
         </div>
-        <div className="flex justify-between">
-          <Sidebar />
-          <div className="ml-20">
-            <div className="flex justify-end pt-14 pb-2   ">
-              <div className="flex space-x-4 items-center mr-20">
+        <div>
+        <Sidebar />
+        <div className={`content-transition  ${isOpened ? "sidebar-opened mr-5" : "sidebar-closed mr-5"}`}>
+          <div className="flex justify-end pt-14 pb-2">
+            <div className="flex space-x-4 items-center mr-2">
                 <input
                   type="search"
                   placeholder="search"
                   className="p-3 rounded-2xl border-2 border-black"
                 />
-                <button
-                  className="flex items-center bg-green-600 rounded-2xl p-3 text-white font-semibold hover:bg-green-700 transition duration-300"
-                  onClick={() => navigate('/')}>
-                  <MdOutlineFileDownload className='h-6 w-6 mr-2' />
-                  Export to Excel
-                </button>
+               <ExportToExcelButton  tableId="EmployeeTable"/>
 
-                <button className="flex items-center bg-black text-white rounded-2xl p-3 font-semibold hover:bg-neutral-600" onClick={() => navigate('/employee-create')}>
+                <button className="flex items-center bg-black text-white rounded-2xl shadow-md p-3 font-semibold hover:bg-neutral-600" onClick={() => navigate('/employee-create')}>
                   <FaRegPlusSquare className="h-6 w-6 mr-2" />
                   Create Employee
                 </button>
               </div>
             </div>
-            <div className="pt-10 p-5 flex justify-center ml-36">
-              <table className="w-2/3 table-auto shadow-md">
+            <div className="pt-10 p-5 flex justify-center">
+              <table id="EmployeeTable" className="w-full table-auto shadow-md">
                 <thead className="bg-black  rounded-t-lg">
                   <tr>
-                    <th className="text-white px-5">Image</th>
+                    <th className="text-white py-2 px-5">Image</th>
                     <th className="text-white px-5">Employee ID</th>
-                    <th className="text-white px-5">Phone Number</th>
-                    <th className="text-white px-5">Email</th>
-                    <th className="text-white px-5">Action</th>
-                    <th className="text-white px-5 ">Name</th>
+                    <th className="text-white px-5">Name</th>
                     <th className="text-white px-5">Status</th>
+                    <th className="text-white px-5">Phone Number</th>
+                    <th className="text-white px-5 ">Email</th>
+                    <th className="text-white px-5">Action</th>
                   </tr>
                 </thead>
                 <tbody className="bg-slate-50 content-center">
@@ -120,7 +120,7 @@ const Employees = () => {
                             <FaEye />
                           </button>
                           <button className="text-black hover:text-gray-800 p-2">
-                            <FaPencilAlt onClick={() => { navigate('/employee-update') }} />
+                            <FaPencilAlt onClick={() => { navigate('/employee-update',{state:{employee}})  }} />
                           </button>
                         </td>
                       </tr>

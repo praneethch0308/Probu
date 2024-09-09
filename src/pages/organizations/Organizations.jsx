@@ -7,6 +7,7 @@ import { FaEye, FaRegPlusSquare } from 'react-icons/fa';
 import { MdOutlineFileDownload } from 'react-icons/md';
 import Aos from 'aos'
 import 'aos/dist/aos.css'
+import ExportToExcelButton from '../../components/ExcelButton';
 
 
 const Organizations = () => {
@@ -24,7 +25,7 @@ const Organizations = () => {
         } else {
           navigate("/");
         }
-      }, [getOrganizations,navigate]);
+      }, []);
 
       useEffect(()=>{
         Aos.init({duration:1000});
@@ -47,17 +48,14 @@ const Organizations = () => {
             <div>
             <div className='flex justify-end p-10 pb-2'>   
       <div className="flex justify-evenly items-start w-1/2">
-        <div className="flex bg-green-600 rounded-2xl p-2 justify-between">
-        <MdOutlineFileDownload className='text-white h-6 w-6'/>
-        <button className='text-white font-semibold' onClick={()=>navigate('/')}>Export to excel</button>
-        </div>
+       <ExportToExcelButton tableId='organizations'/>
         <div className='flex justify-between bg-black rounded-2xl p-2 hover:bg-neutral-600'>
           <FaRegPlusSquare className='text-white h-5 w-5 mr-1 mt-1'/>
           <button className='text-white font-semibold' onClick={()=> navigate('/organization-create')}>Create Organization</button>
         </div>      
       </div>     
       </div>
-                <table className='overflow-x-scroll rounded-b-lg'>
+                <table id='organiazations' className='overflow-x-scroll rounded-b-lg'>
                     <div className="pt-10 p-5">
       <table data-aos='fade-left'  className="mr-2 lg:mr-5 table-auto shadow-md">
         <thead className="bg-black rounded-t-lg">

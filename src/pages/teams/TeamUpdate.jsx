@@ -1,43 +1,42 @@
-import axios from "axios";
+import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import { useForm, Controller } from 'react-hook-form';
+import { format } from 'date-fns';
+import Select from 'react-select';
 import Mainnav from "../../components/Mainnav";
 import Sidebar from "../../components/Sidebar";
-import { z, ZodArray } from 'zod';
-import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { TeamData } from "../../context/teams/TeamState";
 import EmployeeContext from "../../context/employees/EmployeeContext";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import ProjectContext from "../../context/projects/ProjectsContext";
 import TeamContext from "../../context/teams/TeamsContext";
-import { format } from "date-fns";
+import ProjectContext from "../../context/projects/ProjectsContext";
+import ToastNotification from '../../components/ToastNotification';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { TeamData } from '../../context/teams/TeamState';
 
-
-const TeamSchema = z.object({
-    teamName: z.string().min(1, "Team name is required"),
-    status: z.string().min(1, "Status is required"),
-    teamLeads: z.string().min(1, "Team lead is required"),
-    projectManagers: z.string().min(1, "Project Manager is required"),
-    projects:z.string().min(1, "Project is required")
-});
-
-function TeamCreate() {
-    const { register, handleSubmit, formState: { errors } } = useForm({
-        resolver: zodResolver(TeamSchema)
+function TeamUpdate() {
+    const location = useLocation();
+    const navigate= useNavigate();
+    const { state: { team, id } } = location;
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
+        defaultValues: {
+            teamName: team?.teamName || "", 
+            status: team?.status || "", 
+            teamLeads: team?.teamLeads || "", 
+            projectManagers: team?.projectManagers || "", 
+            projects: team?.projects || [], 
+        },
     });
+    const orgId = localStorage.getItem('orgId');
+    const username = localStorage.getItem('loggedUser');
+    const [filteredEmployees, setFilteredEmployees] = useState({ teamLeads: [], projManagers: [] });
+    const [selectedProjects, setSelectedProjects] = useState([]);
+    const [toast, setToast] = useState({ message: '', type: '' });
 
-    const navigate = useNavigate();
     const employeeContext = useContext(EmployeeContext);
     const { employees, getEmployees } = employeeContext;
     const context = useContext(TeamContext);
     const { TeamInitData, initData } = context;
     const statuses = initData?.statuses || [];
-    let projects = initData?.projects || [];
-
-    const [filteredEmployees, setFilteredEmployees] = useState({ teamLeads: [], projManagers: [] });
-    const [selectedProjects, setSelectedProjects] = useState();
-    const orgId = localStorage.getItem('orgId');
-    const username = localStorage.getItem('loggedUser');
+    const projects = initData?.projects || [];
 
     useEffect(() => {
         if (localStorage.getItem('token')) {
@@ -48,6 +47,20 @@ function TeamCreate() {
         }
     }, []);
 
+    useEffect(() => {
+        if (employees.length > 0) {
+            const teamLeadsOptions = employees.map(emp => ({
+                value: `${emp.firstName} ${emp.lastName}`,
+                label: `${emp.firstName} ${emp.lastName}`
+            }));
+            setFilteredEmployees(prevState => ({
+                ...prevState,
+                teamLeads: teamLeadsOptions,
+                projManagers: teamLeadsOptions
+            }));
+        }
+    }, [employees]);
+
     const handleProjectChange = (event) => {
         const selected = Array.from(event.target.selectedOptions, option => {
             const [projName, projId] = option.value.split(',');
@@ -56,22 +69,15 @@ function TeamCreate() {
         setSelectedProjects(selected);
     };
 
-    const filterEmployees = (event, type) => {
-        const value = event.target.value.toLowerCase();
-        const filtered = employees.filter(emp =>
-            `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(value)
-        );
-        setFilteredEmployees(prevState => ({ ...prevState, [type]: filtered }));
-    };
-
     const onSubmit = async (data) => {
         try {
-            const teamData = new TeamData();
+            const teamData = new TeamData()
             teamData.team.teamName = data.teamName;
-            const createDate = format(new Date(), 'yyyy-MM-dd','en');
-            teamData.team.createdDate= createDate;
+            const createDate = format(new Date(), 'yyyy-MM-dd', 'en');
+            teamData.team.createdDate = createDate;
             teamData.team.status = data.status;
             teamData.team.size = 0;
+            teamData.team.id = team.id;
             teamData.team.projectManager = data.projectManagers;
 
             const projManager = employees.find(
@@ -87,31 +93,38 @@ function TeamCreate() {
             teamData.team.projectNames = [];
             teamData.team.projectObjIds = [];
 
-            selectedProjects.forEach(element => {
-                teamData.team.projectNames.push(element.projName);
-                teamData.team.projectObjIds.push(element.projId);
-            });
+            if (Array.isArray(selectedProjects)) {
+                selectedProjects.forEach(element => {
+                    teamData.team.projectNames.push(element.projName);
+                    teamData.team.projectObjIds.push(element.projId);
+                });
+            } else {
+                console.warn('selectedProjects is not an array', selectedProjects);
+            }
 
             teamData.team.orgId = orgId;
             teamData.username = username;
-            teamData.statuses=[];
-            teamData.projects=[];
-            teamData.teamLeads=[];
-            teamData.projectManagers=[];
-            
-            teamData.createdate = format(new Date(), 'yyyy-MM-dd HH:mm:ss','en');
-            console.log(teamData)
+            teamData.statuses = [];
+            teamData.projects = [];
+            teamData.teamLeads = [];
+            teamData.projectManagers = [];
+
+            teamData.createdate = format(new Date(), 'yyyy-MM-dd HH:mm:ss', 'en');
+            console.log(teamData);
             const accessToken = localStorage.getItem("token");
             const response = await axios.post(
-                `http://157.245.110.240:8080/ProBuServices/team/create?access_token=${accessToken}`,
+                `http://157.245.110.240:8080/ProBuServices/team/update?access_token=${accessToken}`,
                 teamData
-               
             );
 
             console.log(response.data);
-            navigate("/teams");
+            setToast({ message: 'Team updated successfully!', type: 'success' });
+            setTimeout(() => {
+                navigate("/teams");
+            }, 2000);
         } catch (error) {
             console.error("Error creating team:", error);
+            setToast({ message: 'Failed to update team.', type: 'error' });
         }
     };
 
@@ -169,28 +182,38 @@ function TeamCreate() {
                                 <div className="w-1/2">
                                     <div className="flex flex-col">
                                         <label className="text-black pl-1">Team Leads</label>
-                                        <input type="text" onChange={(e) => filterEmployees(e, 'teamLeads')} className="w-full px-3 py-2 border rounded" />
-                                        <select id="teamLeads" {...register('teamLeads')} className="w-full px-3 py-2 border rounded">
-                                            {filteredEmployees.teamLeads.map((employee) => (
-                                                <option key={employee.id} value={`${employee.firstName} ${employee.lastName}`}>
-                                                    {employee.firstName} {employee.lastName}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <Controller
+                                            name="teamLeads"
+                                            control={control}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Select
+                                                    options={filteredEmployees.teamLeads}
+                                                    onChange={(option) => onChange(option?.value || '')}
+                                                    value={filteredEmployees.teamLeads.find(option => option.value === value) || null}
+                                                    isClearable
+                                                    placeholder="Select Team Lead"
+                                                />
+                                            )}
+                                        />
                                         {errors.teamLeads && <p className="text-red-600 text-sm pl-8">{errors.teamLeads.message}</p>}
                                     </div>
                                 </div>
                                 <div className="w-1/2">
                                     <div className="flex flex-col">
                                         <label className="text-black pl-1">Project Managers</label>
-                                        <input type="text" onChange={(e) => filterEmployees(e, 'projManagers')} className="w-full px-3 py-2 border rounded" />
-                                        <select id="projectManagers" {...register('projectManagers')} className="w-full px-3 py-2 border rounded">
-                                            {filteredEmployees.projManagers.map((employee) => (
-                                                <option key={employee.id} value={`${employee.firstName} ${employee.lastName}`}>
-                                                    {employee.firstName} {employee.lastName}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <Controller
+                                            name="projectManagers"
+                                            control={control}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Select
+                                                    options={filteredEmployees.projManagers}
+                                                    onChange={(option) => onChange(option?.value || '')}
+                                                    value={filteredEmployees.projManagers.find(option => option.value === value) || null}
+                                                    isClearable
+                                                    placeholder="Select Project Manager"
+                                                />
+                                            )}
+                                        />
                                         {errors.projectManagers && <p className="text-red-600 text-sm pl-8">{errors.projectManagers.message}</p>}
                                     </div>
                                 </div>
@@ -201,10 +224,11 @@ function TeamCreate() {
                             </div>
                         </div>
                     </form>
+                    <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
                 </div>
             </div>
         </div>
     );
 }
 
-export default TeamCreate;
+export default TeamUpdate;

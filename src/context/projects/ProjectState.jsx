@@ -27,6 +27,23 @@ export class Project {
   orgId = '';
 }
 
+
+export class CustListItem {
+  id = '';
+  listName = '';
+  listItem = '';
+  status = '';
+  orgId = '';
+}
+
+export class ProjectData {
+  project = new Project;
+  statuses =[];
+  verticals = [];
+  actionTime = Date;
+  loggedInUsername= '';
+  orgId= '';
+}
 export const ProjectProvider = ({ children }) => {
 
   const baseUrl = "http://157.245.110.240:8080/ProBuServices";

@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import ClientContext from "./ClientContext";
 import axios from "axios";
 
+
+export class ContactInfo {
+    id = '';
+    contactName = '';
+    contactPhone = '';
+    contactEmail = '';
+    contactDesignation = '';
+    isPrimary = false;
+    clientObjId = '';
+    vendorObjId = '';
+    orgObjId = '';
+    orgId = '';
+}
 function ClientState(props) {
     const host = "http://157.245.110.240:8080/ProBuServices";
     const Clientsintial = [];

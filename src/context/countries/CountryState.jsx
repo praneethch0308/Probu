@@ -11,7 +11,7 @@ export const CountryProvider = ({ children }) => {
     const baseUrl = "http://157.245.110.240:8080/ProBuServices";
     const [countries, setCountries] = useState(new CountryList());
  
-    
+    const accessToken= localStorage.getItem('token');
 const getAllCountries =async ()=>{
     try{
         const response = await axios.get(`${baseUrl}/country/countries`, {
@@ -41,4 +41,4 @@ return (
   );
 }
 
-export default ProjectProvider;
+export default CountryProvider;

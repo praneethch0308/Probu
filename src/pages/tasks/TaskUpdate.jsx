@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format as formatDate } from "date-fns";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import Mainnav from "../../components/Mainnav";
 import Sidebar from "../../components/Sidebar";
@@ -11,22 +11,40 @@ import EmployeeContext from "../../context/employees/EmployeeContext";
 import TaskContext from "../../context/tasks/TaskContext";
 import ProjectContext from "../../context/projects/ProjectsContext";
 import { Note, TaskData } from "../../context/tasks/TaskState";
+import ToastNotification from "../../components/ToastNotification";
 
-// Define the Create Task Schema
-const TeamSchema = z.object({
-    title: z.string().min(1, "Title is required"),
-    workEstimate: z.string().min(1, "Work Estimation is required"),
-    assignedTo: z.string().min(1, "Assigned To is required"),
-    description: z.string().optional(),
-    project: z.string().min(1, "Project is required"),
-    priority: z.string().optional(),
-    note: z.string().optional(),
-});
 
-function TaskCreate() {
-    const { register, handleSubmit, formState: { errors } } = useForm({
-        resolver: zodResolver(TeamSchema),
-    });
+
+function TaskUpdate() {
+    const location = useLocation();
+  const { state: { task, id } } = location;
+    const { register, handleSubmit,reset, formState: { errors } } = useForm({
+        defaultValues: {
+            title: task?.title || "", 
+            workEstimate: task?.estimatedWorkTime || "", 
+            assignedTo: task?.assignedTo || "", 
+            description: task?.description|| "", 
+            project: task?.project || [], 
+            priority:task?.priority,
+            note:task?.comments
+         
+        },
+      });
+      const host = "http://157.245.110.240:8080/ProBuServices";
+      const orgId= localStorage.getItem('orgId');
+      const [toast, setToast] = useState({ message: '', type: '' });
+      const username= localStorage.getItem('loggedUser');
+      useEffect(() => {
+        reset({
+            title: task?.title || "", 
+            workEstimate: task?.estimatedWorkTime || "", 
+            assignedTo: task?.assignedTo || "", 
+            description: task?.description|| "", 
+            project: task?.project || [], 
+            priority:task?.priority,
+            note:task?.comments
+        })
+      }, [task, reset]);
 
     const navigate = useNavigate();
     const employeeContext = useContext(EmployeeContext);
@@ -34,6 +52,7 @@ function TaskCreate() {
     const taskContext = useContext(TaskContext);
     const { taskInitData, getTaskInitData } = taskContext;
     const priorities = taskInitData?.priorities || [];
+    const  statuses= taskInitData?.statuses||[];
 
     const projectContext = useContext(ProjectContext);
     const { projects, getAllProjects } = projectContext;
@@ -44,8 +63,7 @@ function TaskCreate() {
         assignedTo: [],
     });
 
-    const orgId = localStorage.getItem('orgId');
-    const username = localStorage.getItem('loggedUser');
+ 
 
     useEffect(() => {
         if (localStorage.getItem('token')) {
@@ -72,58 +90,49 @@ function TaskCreate() {
             // Parse the project value (assuming format is "projectId || projectName")
             const [projectId, projectName] = data.project.split(" || ");
 
-            taskData.task.id = '';
+            taskData.task.id =task.id ;
+            taskData.task.taskId = task.taskId;
             taskData.task.title = data.title;
             taskData.task.description = data.description || '';
-            taskData.task.status = '';
+            taskData.task.status = data.status;
             const createdDate = formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss', 'en');
             taskData.task.createdDate = createdDate;
             taskData.task.estimatedWorkTime = Number(data.workEstimate);
-            taskData.task.completedWork = 0;
-            taskData.task.remainingWork = 0;
-            taskData.task.createdBy = '';
-            taskData.task.assignedBy = '';
+            taskData.task.completedWork = task.completedWork;
+            taskData.task.remainingWork = task.remainingWork;
+            taskData.task.createdBy = task.createdBy;
+            taskData.task.assignedBy = task.assignedBy;
             taskData.task.assignedTo = data.assignedTo;
             taskData.task.project = projectName;  // Set the project name
             taskData.task.priority = data.priority;
             const completeDate = formatDate(new Date(), 'yyyy-MM-dd', 'en');
             taskData.task.completedDate = completeDate;
             taskData.task.assignedEmpObjId = findEmployeeId(data.assignedTo);
-            taskData.task.createdEmpObjId = '';
-            taskData.task.assignedByEmpObjId = '';
+            taskData.task.createdEmpObjId = task.createdEmpObjId;
+            taskData.task.assignedByEmpObjId = task.assignedByEmpObjId;
             taskData.task.projectObjId = projectId;  // Set the project ID
-            taskData.task.mgrObjId = '';
+            taskData.task.mgrObjId = task.mgrObjId;
             taskData.task.orgId = orgId;
             taskData.statuses = [];
-
-            const note = new Note();
-            note.id = '';
-            note.comments = data.note;  // Assuming `note` not `notes` is the correct key
-            note.loggedTime = completeDate;
-            note.loggedBy = username;
-            note.projectObjId = projectId;
-            note.taskObjId = '';
-            note.empObjId = findEmployeeId(data.assignedTo);
-            note.resourceObjId = '';
-            note.clientObjId = '';
-            note.vendorObjId = '';
-            note.orgId = orgId;
-
-            taskData.notes = [note];
+            taskData.notes = [];
             taskData.attachments = [];
             taskData.actionTime = createdDate;
             taskData.userName = username;
             taskData.orgId = orgId;
 
             const accessToken = localStorage.getItem("token");
+            console.log(data.status)
             console.log(taskData);
             const response = await axios.post(
-                `http://157.245.110.240:8080/ProBuServices/task/create?access_token=${accessToken}`,
+                `http://157.245.110.240:8080/ProBuServices/task/update?access_token=${accessToken}`,
                 taskData
             );
 
             console.log(response.data);
-            navigate("/tasks");
+            setToast({ message: 'Task updated successfully!', type: 'success' });
+            setTimeout(() => {
+                navigate("/tasks");
+            }, 2000);
         } catch (error) {
             console.error("Error creating task:", error);
         }
@@ -145,7 +154,7 @@ function TaskCreate() {
                 <Sidebar />
                 <div className="mr-10 mt-10 items-center w-3/4">
                     <div className="text-center text-4xl w-full bg-gradient-to-r from-black to-neutral-400 py-4 rounded-md">
-                        <h1 className="text-white font-semibold">Task Create</h1>
+                        <h1 className="text-white font-semibold">Task Update</h1>
                     </div>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="flex flex-col space-y-4 mt-8 bg-neutral-300 p-5 rounded-md">
@@ -198,7 +207,7 @@ function TaskCreate() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="w-1/2">
+                                <div className="w-1/3">
                                     <div className="flex flex-col">
                                         <label className="text-black pl-1">Priority</label>
                                         <select {...register('priority')} className="w-full px-3 py-2 border rounded">
@@ -213,14 +222,29 @@ function TaskCreate() {
                                         )}
                                     </div>
                                 </div>
+                                <div className="w-1/3">
+                                    <div className="flex flex-col">
+                                        <label className="text-black pl-1">Status</label>
+                                        <select {...register('status')} className="w-full px-3 py-2 border rounded">
+                                            {statuses.map(status => (
+                                                <option key={status.value} value={status.listItem}>
+                                                    {status.listItem}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.priority && (
+                                            <p className="text-red-600 text-sm pl-8">{errors.priority.message}</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-black pl-1">Notes</label>
-                                <textarea {...register('note')} className="w-full h-40 p-2 rounded-md" />
+                                <input {...register('note')} className="w-full h-15 p-2 rounded-md" />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-black pl-1">Task Description</label>
-                                <textarea {...register('description')} className="w-full h-40 p-2 rounded-md" />
+                                <input {...register('description')} className="w-full h-10 p-2 rounded-md" />
                             </div>
                             <div className="flex justify-center">
                                 <button type="submit" className="bg-neutral-500 hover:bg-neutral-800 text-white font-bold py-2 px-4 rounded-full">
@@ -229,10 +253,11 @@ function TaskCreate() {
                             </div>
                         </div>
                     </form>
+                    <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
                 </div>
             </div>
         </div>
     );
 }
 
-export default TaskCreate;
+export default TaskUpdate;

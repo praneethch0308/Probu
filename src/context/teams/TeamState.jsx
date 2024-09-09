@@ -2,17 +2,48 @@ import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../authentication/AuthContext';
 import TeamContext from './TeamsContext';
+import { CustListItem, Project } from '../projects/ProjectState';
+import { Employee } from '../employees/EmployeeState';
 
+
+
+export class Team {
+  id = '';
+  teamName = '';
+  createdDate= Date;
+  vertical = '';
+  status = '';
+  size = 0;
+  projectManager = '';
+  managerObjId = '';
+  teamLead = '';
+  leadObjId = '';
+  projectNames = [];
+  projectObjIds = [];
+  orgId = '';
+}
+
+export class TeamData {
+  team= new Team();
+ statuses =[];
+  projects= [];
+  teamLeads=[];
+  projectManagers= [];
+  username = '';
+  createdate=Date;
+}
 
 export const TeamState = ({ children }) => {
 
   const baseUrl = "http://157.245.110.240:8080/ProBuServices";
   const [teams, setTeams] = useState([]);
-
+  const [initData,setInitData]= useState([]);
+  const orgId = localStorage.getItem('orgId')
+  const accessToken = localStorage.getItem('token');
   const getAllTeams = async () => {
     try {
-      const accessToken = localStorage.getItem('token');
-      const orgId = localStorage.getItem('orgId')
+
+   
       const response = await axios.get(`${baseUrl}/team/all/${orgId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`
@@ -25,8 +56,22 @@ export const TeamState = ({ children }) => {
     }
   };
 
+  const TeamInitData= async()=>{
+    try{
+      const response = await axios.get(`${baseUrl}/team/init/${orgId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+        setInitData(response.data);
+
+    } catch(error){
+console.error(error);
+    }
+  }
+
   return (
-    <TeamContext.Provider value={{ teams, getAllTeams }}>
+    <TeamContext.Provider value={{ teams, getAllTeams, TeamInitData,initData }}>
       {children}
     </TeamContext.Provider>
   );

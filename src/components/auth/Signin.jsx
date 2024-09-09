@@ -21,33 +21,47 @@ const Signin = () => {
 
   const onSubmit = async (values) => {
     try {
+      console.log('Attempting login...');
       const data = await login(values.username, values.password);
+      console.log('Login response:', data);
+
       if (data !== 'Bad credentials') {
         setAccessToken(data.access_token);
         localStorage.setItem('loggedUser', values.username);
-        const loggedUser = localStorage.getItem('loggedUser');
-        if (loggedUser !== null) {
-          const userSecurityData = await getUserSecurityData(loggedUser);
+        
+        // Ensure the access token is correctly set before making the request
+        const token = data.access_token;
+        if (token) {
+          const userSecurityData = await getUserSecurityData(values.username, token);
+          console.log('User security data:', userSecurityData);
+
           setUser(userSecurityData);
           setUserSecurity(userSecurityData);
-          const role= user.roles[0];
-          const fullName= user.fullName;
-          const orgId= user.orgId;
-          localStorage.setItem('orgId',orgId);
-          console.log(role);
-          console.log(fullName);
-          console.log(orgId);
-          localStorage.setItem('role',role);
-          if (userSecurityData) {
-              navigate('/home')
-          }
-        }
-      } 
-    } catch (error) {
-      setError('Invalid Credentials');
-    }
-  };
 
+          const role = userSecurityData.roles[0];
+          const fullName = userSecurityData.fullName;
+          const orgId = userSecurityData.orgId;
+
+          localStorage.setItem('orgId', orgId);
+          localStorage.setItem('role', role);
+            if(userSecurityData.firstLogin){
+              navigate('/chngpwd')
+            }
+            else{
+              navigate('/home');
+            }
+        
+        } else {
+          setError('Invalid Credentials1');
+        }
+      } else {
+        setError('Invalid Credentials2');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Invalid Credentials3');
+    }
+  };
   return (
     <div>
       <Loginnav />

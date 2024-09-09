@@ -23,11 +23,7 @@ const OrganizationState=(props)=>{
         }
       };
     
-      useEffect(() => {
-        if (localStorage.getItem("token")) {
-          getOrganizations();
-        }
-      }, []); 
+   
 
       const CreateOrganization=()=>{
         

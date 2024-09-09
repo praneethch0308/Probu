@@ -7,11 +7,15 @@ import 'tailwindcss/tailwind.css';
 import Mainnav from '../../components/Mainnav';
 import Sidebar from '../../components/Sidebar';
 import ClientContext from '../../context/clients/ClientContext';
-import { useNavigate } from 'react-router-dom';
+import { json, useNavigate } from 'react-router-dom';
 import ProjectContext from '../../context/projects/ProjectsContext';
 import EmployeeContext from '../../context/employees/EmployeeContext';
+import { CustListItem, Project, ProjectData } from '../../context/projects/ProjectState';
+import { format } from 'date-fns';
 
-// Define the schema using Zod
+
+
+
 const ProjectSchema = z.object({
   projName: z.string().min(1, 'Project Name is required'),
   vertical: z.string().min(1, 'Select Vertical'),
@@ -20,19 +24,21 @@ const ProjectSchema = z.object({
   leadCreator: z.string().min(1, 'Lead Creator is required'),
   clientObjId: z.string().min(1, 'Select Client'),
   projManager: z.string().min(1, 'Select Project Manager'),
-  projCost: z.number().min(1, 'Project Cost is required'),
-  gstAmt: z.number().min(1, 'GST Amount is required'),
+  projCost: z.union([z.string().min(1, 'Spent Budget is required'), z.number()]),
+  gstAmt:z.union([z.string().min(1, 'Spent Budget is required'), z.number()]),
   startDate: z.string().min(1, 'Start Date is required'),
   endDate: z.string().min(1, 'End Date is required'),
   actualEndDate: z.string().optional(),
-  allocatedBudget: z.number().min(1, 'Allocated Budget is required'),
-  spentBudget: z.number().min(1, 'Spent Budget is required'),
-  spentBudgetGst: z.number().min(1, 'Spent Budget GST is required'),
+  allocatedBudget:z.union([z.string().min(1, 'Spent Budget is required'), z.number()]),
+  spentBudget: z.preprocess((val) => val.toString(), z.string().min(1, 'Spent Budget is required')),
+  spentBudgetGst: z.union([z.string().min(1, 'Spent Budget is required'), z.number()]),
 });
 
 const ProjectCreate = () => {
+  const orgId= localStorage.getItem('orgId');
+  const username= localStorage.getItem('loggedUser');
   const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(ProjectSchema),
+            resolver: zodResolver(ProjectSchema)
   });
 
   const navigate = useNavigate();
@@ -44,11 +50,13 @@ const ProjectCreate = () => {
   const projectContext = useContext(ProjectContext);
   const { ProjectInitData, initData } = projectContext;
 
+
   const employeeContext = useContext(EmployeeContext);
   const { employees, getEmployees } = employeeContext;
 
   const statuses = initData?.statuses || [];
   const verticals = initData?.verticals || [];
+
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
@@ -56,7 +64,8 @@ const ProjectCreate = () => {
     } else {
       navigate("/projects");
     }
-  }, [getClients, navigate]);
+  }, []);
+
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
@@ -64,7 +73,7 @@ const ProjectCreate = () => {
     } else {
       navigate("/projects");
     }
-  }, [getEmployees, navigate]);
+  }, []);
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
@@ -72,18 +81,63 @@ const ProjectCreate = () => {
     } else {
       navigate("/projects");
     }
-  }, [ProjectInitData, navigate]);
+  }, []);
 
-  const onSubmit = async (data) => {
+ const ProjectForm= new ProjectData();
+
+  const onSubmit = async (data,e) => {
+    e.preventDefault();
     try {
+        ProjectForm.project.projectName=data.projName;
+        ProjectForm.project.vertical=data.vertical;
+        ProjectForm.project.projectDescription= data.description;
+        ProjectForm.project.projectStatus= data.projStatus;
+        ProjectForm.project.leadCreator= data.leadCreator;
+        ProjectForm.project.clientObjId = data.clientObjId;
+        ProjectForm.project.projectManager= data.projManager;
+        ProjectForm.project.empObjId= data.projManager;
+        ProjectForm.project.projectCost= data.projCost.toString();
+        ProjectForm.project.gstAmt= data.gstAmt.toString();
+         const stDate= format(new Date(data.startDate), 'yyyy-MM-dd');
+        ProjectForm.project.startDate = stDate;
+        const endDt =format(new Date(data.endDate), 'yyyy-MM-dd');
+          ProjectForm.project.endDate = endDt;
+        const actualEndDt = format(new Date(data.actualEndDate), 'yyyy-MM-dd');
+          ProjectForm.project.actualEndDate = actualEndDt;
+          ProjectForm.project.allocatedBudget = data.allocatedBudget.toString();
+          ProjectForm.project.spentBudget = data.spentBudget.toString();
+          ProjectForm.project.spentBudgetGst = data.spentBudgetGst.toString();
+          ProjectForm.project.leadCreatorObjId = data.leadCreator;
+          ProjectForm.project.orgId = orgId;
+          const actTime =format(new Date(), 'yyyy-MM-dd');
+          ProjectForm.actionTime = actTime;
+          ProjectForm.loggedInUsername = username;
+          ProjectForm.orgId = orgId;
+ console.log(ProjectForm);
+      
       const access_token = localStorage.getItem('token');
-      const response = await axios.post(`${host}/project/create?access_token=${access_token}`, data);
+      if (!access_token) {
+        throw new Error('Access token not found');
+      }
+      console.log('Access Token:', access_token); 
+      const response = await axios.post(`${host}/project/create?access_token=${access_token}`,ProjectForm,
+        {
+          headers: {
+            'Content-Type':'application/json',
+
+            
+          },
+        }
+      );
       console.log('Project created successfully', response.data);
+      navigate('/projects');
     } catch (error) {
       console.error('Error creating project', error.response ? error.response.data : error.message);
     }
   };
 
+
+  
   return (
     <div>
       <div className="pb-10">
@@ -138,26 +192,21 @@ const ProjectCreate = () => {
             <div className="md:flex justify-between">
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black ">Lead Creator</label>
-                <input
-                  id="lead"
-                  type="text"
-                  list="employeeList"
-                  {...register('leadCreator')}
-                  className="w-full px-3 py-2 border rounded"
-                />
-                <datalist id="employeeList">
+              
+                <select id="employeeList"  {...register('leadCreator')}
+                  className="w-full px-3 py-2 border rounded">
                   {employees.map(employee => (
-                    <option key={employee.id} value={`${employee.firstName} ${employee.lastName}`}>
+                    <option key={employee.id} value={`${employee.id}`}>
                       {employee.firstName} {employee.lastName}
                     </option>
                   ))}
-                </datalist>
+                </select>
                 {errors.leadCreator && <p className="text-red-500 text-sm">{errors.leadCreator.message}</p>}
               </div>
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black ">Client</label>
                 <select {...register('clientObjId')} className="w-full px-3 py-2 border rounded">
-                  <option value="" disabled>Select Client</option>
+                  <option value="" selected disabled>Select Client</option>
                   {clients.map(client => (
                     <option key={client.id} value={client.id}>{client.clientName}</option>
                   ))}
@@ -169,7 +218,7 @@ const ProjectCreate = () => {
                 <select {...register('projManager')} className="w-full px-3 py-2 border rounded">
                   <option value="" disabled>Select Project Manager</option>
                   {employees.map(employee => (
-                    <option key={employee.id} value={`${employee.firstName} ${employee.lastName}`}>
+                    <option key={employee.id} value={`${employee.id} `}>
                       {employee.firstName} {employee.lastName}
                     </option>
                   ))}
@@ -180,8 +229,8 @@ const ProjectCreate = () => {
             <div className="md:flex justify-between">
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black">Project Cost</label>
-                <input
-                  type="number"
+                <input  
+                  type="text"
                   {...register('projCost', { valueAsNumber: true })}
                   className="w-full px-3 py-2 border rounded"
                 />
@@ -190,7 +239,7 @@ const ProjectCreate = () => {
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black">GST Amount</label>
                 <input
-                  type="number"
+                  type="text"
                   {...register('gstAmt', { valueAsNumber: true })}
                   className="w-full px-3 py-2 border rounded"
                 />
@@ -218,7 +267,7 @@ const ProjectCreate = () => {
               </div>
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black ">Actual End Date</label>
-                <input
+                <input  
                   type="date"
                   {...register('actualEndDate')}
                   className="w-full px-3 py-2 border rounded"
@@ -227,11 +276,10 @@ const ProjectCreate = () => {
               </div>
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black">Allocated Budget</label>
-                <input
-                  type="number"
+                <input  
+                  type="text"
                   {...register('allocatedBudget', { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border rounded"
-                />
+                  className="w-full px-3 py-2 border rounded" />
                 {errors.allocatedBudget && <p className="text-red-500 text-sm">{errors.allocatedBudget.message}</p>}
               </div>
             </div>
@@ -239,16 +287,15 @@ const ProjectCreate = () => {
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black ">Spent Budget</label>
                 <input
-                  type="number"
+                  type="text"
                   {...register('spentBudget', { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border rounded"
-                />
+                  className="w-full px-3 py-2 border rounded" />
                 {errors.spentBudget && <p className="text-red-500 text-sm">{errors.spentBudget.message}</p>}
               </div>
               <div className="mb-4 md:w-64 rounded-lg ml-4">
                 <label className="block text-black">Spent Budget GST</label>
                 <input
-                  type="number"
+                  type="text"
                   {...register('spentBudgetGst', { valueAsNumber: true })}
                   className="w-full px-3 py-2 border rounded"
                 />

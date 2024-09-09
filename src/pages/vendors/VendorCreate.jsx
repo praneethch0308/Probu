@@ -4,6 +4,9 @@ import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import Mainnav from "../../components/Mainnav";
 import Sidebar from "../../components/Sidebar";
+import { useForm } from "react-hook-form";
+import { Vendor } from "../../context/vendors/VendorState";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const ContactInfoSchema = z.object({
   contactName: z.string().min(1, "*Contact name is required"),
@@ -12,99 +15,122 @@ const ContactInfoSchema = z.object({
     .min(10, "*Contact mobile number must be 10 digits")
     .max(10, "*Contact mobile number must be 10 digits"),
   contactEmail: z.string().email("Invalid contact email"),
-  designation: z.string().min(3, "*Designation is required")
+  designation: z.string().min(3, "*Designation is required"),
 });
 
-const VendorSchema = z.object({
-  vendorName: z
-    .string()
-    .min(2, '*Vendor Name is required')
-    .max(50, 'Vendor Name is too long!'),
-  companyName: z
-    .string()
-    .min(2, '*Company Name is required')
-    .max(50, 'Company Name is too long!'),
-  gstNo: z.string().min(1, "*GST Number is required"),
-  panNo: z.string().min(1, "*PAN Number is required"),
-  phoneNumber: z
-    .string()
-    .min(10, "*Contact mobile number must be 10 digits")
-    .max(10, "*Contact mobile number must be 10 digits"),
-  Email: z.string().email("Invalid contact email"),
-  address: z.string().min(5, '*Address is required'),
-  city: z.string().min(3, '*Address is required'),
-  country: z.string().nonempty('Country is required'),
-  state: z.string().nonempty('Country is required'),
-  district: z.string().nonempty('Country is required'),
-  pinCode: z.string().min(6, "*GST Number is required"),
-  vendorType: z.string().nonempty('Country is required'),
-  contactInfo: z.array(ContactInfoSchema).optional()
-})
+const vendorSchema = z.object({
+  vendName: z.string().optional(),
+  companyName: z.string().optional(),
+  gstNo: z.string().optional(),
+  panNo: z.string().optional(),
+  phone: z.string().regex(/^[0-9]{10}$/, 'Phone number must be 10 digits'),
+  email: z.string().email('Invalid email address'),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  state: z.string().optional(),
+  district: z.string().optional(),
+  pincode: z.string().regex(/^[0-9]{6}$/, 'Pincode must be 6 digits'),
+  type: z.string().optional(),
+  vendImage: z.string().min(1, 'Vendor image is required')
+});
+
+const contactSchema = z.object({
+  contactName: z.string().optional(),
+  contactPhone: z.string().regex(/^[0-9]{10}$/, 'Phone number must be 10 digits'),
+  contactEmail: z.string().email('Invalid email address'),
+  contactDesignation: z.string().optional(),
+  isPrimary: z.boolean().optional()
+});
 
 const VendorCreate = () => {
-  const [formData, setFormData] = useState({
-    vendorName: "",
-    companyName: "",
-    gstNo: "",
-    panNo: "",
-    phoneNumber: "",
-    Email: "",
-    address: "",
-    city: "",
-    country: "",
-    state: "",
-    district: "",
-    pinCode: "",
-    vendorType: "",
-    contactInfo: [{ contactName: "", contactPhone: "", contactEmail: "", designation: "" }],
-  })
-  const [errors, setErrors] = useState({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm({
+    resolver: zodResolver(vendorSchema),
+  });
+
   const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
+const accessToken=localStorage.getItem('token');
   const stateOptions = {
-    "USA": ["California", "Texas", "New York", "Florida", "Illinois"],
-    "Canada": ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba"],
-    "India": ["Maharashtra", "Uttar Pradesh", "Tamil Nadu", "Karnataka", "Gujarat", "Telangana", "Andhra Pradesh"],
-    // Add more countries and their respective states as needed
+    USA: ["California", "Texas", "New York", "Florida", "Illinois"],
+    Canada: ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba"],
+    India: [
+      "Maharashtra",
+      "Uttar Pradesh",
+      "Tamil Nadu",
+      "Karnataka",
+      "Gujarat",
+      "Telangana",
+      "Andhra Pradesh",
+    ],
   };
+
   const districtOptions = {
-    "Andhra Pradesh": ["Anantapur", "Chittoor", "East Godavari", "Guntur", "Krishna", "Kurnool", "Nellore", "Prakasam", "Srikakulam", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR Kadapa"],
-    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Thane", "Aurangabad", "Solapur", "Amravati", "Nanded", "Kolhapur"],
-    "Telangana": ["Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhupalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Komaram Bheem", "Mahabubabad", "Mahbubnagar", "Mancherial", "Medak", "Medchal–Malkajgiri", "Nagarkurnool", "Nalgonda", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla", "Ranga Reddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy", "Warangal Rural", "Warangal Urban", "Yadadri Bhuvanagiri"]
-    // Add more states and their districts as needed
-  };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    const { name, value } = e.target;
-
-    // Allow only digits and restrict to 10 digits
-    const phoneNumberPattern = /^\d{0,10}$/;
-
-    if (name === 'phoneNumber') {
-      if (phoneNumberPattern.test(value)) {
-        setFormData({
-          ...formData,
-          [name]: value
-        });
-
-        // Clear any previous error message
-        setErrors({
-          ...errors,
-          [name]: ''
-        });
-      } else {
-        setErrors({
-          ...errors,
-          [name]: 'Phone number must be 10 digits'
-        });
-      }
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
+    "Andhra Pradesh": [
+      "Anantapur",
+      "Chittoor",
+      "East Godavari",
+      "Guntur",
+      "Krishna",
+      "Kurnool",
+      "Nellore",
+      "Prakasam",
+      "Srikakulam",
+      "Visakhapatnam",
+      "Vizianagaram",
+      "West Godavari",
+      "YSR Kadapa",
+    ],
+    Maharashtra: [
+      "Mumbai",
+      "Pune",
+      "Nagpur",
+      "Nashik",
+      "Thane",
+      "Aurangabad",
+      "Solapur",
+      "Amravati",
+      "Nanded",
+      "Kolhapur",
+    ],
+    Telangana: [
+      "Adilabad",
+      "Bhadradri Kothagudem",
+      "Hyderabad",
+      "Jagtial",
+      "Jangaon",
+      "Jayashankar Bhupalpally",
+      "Jogulamba Gadwal",
+      "Kamareddy",
+      "Karimnagar",
+      "Khammam",
+      "Komaram Bheem",
+      "Mahabubabad",
+      "Mahbubnagar",
+      "Mancherial",
+      "Medak",
+      "Medchal–Malkajgiri",
+      "Nagarkurnool",
+      "Nalgonda",
+      "Nirmal",
+      "Nizamabad",
+      "Peddapalli",
+      "Rajanna Sircilla",
+      "Ranga Reddy",
+      "Sangareddy",
+      "Siddipet",
+      "Suryapet",
+      "Vikarabad",
+      "Wanaparthy",
+      "Warangal Rural",
+      "Warangal Urban",
+      "Yadadri Bhuvanagiri",
+    ],
   };
 
   const handleImageChange = (e) => {
@@ -112,45 +138,65 @@ const VendorCreate = () => {
       setSelectedImage(URL.createObjectURL(e.target.files[0]));
     }
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
 
+  const onSubmit = async (data) => {
     try {
-      const validatedData = OrganizationCreateDataSchema.parse(formData);
-      const accessToken = localStorage.getItem("token");
+        const VendCreateData = {
+            vendorname: data.vendName || '',
+            companyName: data.companyName || '',
+            gstNo: data.gstNo || '',
+            panNo: data.panNo || '',
+            phone: data.phone,
+            email: data.email,
+            address: data.address || '',
+            city: data.city || '',
+            country: data.country || '',
+            state: data.state || '',
+            district: data.district || '',
+            pincode: data.pincode,
+            type: data.type || '',
+            vendImage: fileName || '',
+            contact: {
+                contactName: data.contactName || '',
+                contactPhone: data.contactPhone || '',
+                contactEmail: data.contactEmail || '',
+                contactDesignation: data.contactDesignation || '',
+                isPrimary: data.isPrimary || false,
+            }
+        };
+
+        const formData = new FormData();
+        formData.append('VendCreateData', JSON.stringify(VendCreateData));
+
+
+      console.log(VendorData);
 
       const response = await axios.post(
-        "http://157.245.110.240:8080/ProBuServices/vendor/create",
-        validatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        `http://157.245.110.240:8080/ProBuServices/vendor/create?access_token=${accessToken}`,
+        formData
       );
 
       console.log(response.data);
       navigate("/vendors");
     } catch (error) {
       if (error instanceof z.ZodError) {
-        setErrors(
-          error.errors.reduce((acc, curr) => {
-            acc[curr.path[0]] = curr.message;
-            return acc;
-          }, {})
-        );
+        console.error("Validation errors:", error.errors);
       } else {
-        console.error("Error creating organization:", error);
+        console.error("Error creating vendor:", error);
       }
     }
-  }
+  };
+
+  const selectedCountry = watch("country");
+  const selectedState = watch("state");
+
   return (
     <div>
       <div className="pb-10">
         <Mainnav />
       </div>
       <div className="flex justify-between">
-        <div className="">
+        <div>
           <Sidebar />
         </div>
         <div className="mr-24 w-2/3 items-center">
@@ -159,345 +205,243 @@ const VendorCreate = () => {
               VENDOR-CREATE
             </p>
           </div>
-          <form className="bg-neutral-200 rounded-lg p-5 mt-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="bg-neutral-200 rounded-lg p-5 mt-4">
             <div className="flex justify-between">
               <div className="w-1/3">
-                <label >Vendor Name</label> <br />
+                <label>Vendor Name</label> <br />
                 <input
                   type="text"
                   name="vendorName"
-                  value={formData.vendorName}
-                  onChange={handleChange}
+                  {...register("vendorName")}
                   className="p-2 rounded-lg w-64"
                   placeholder="Enter Vendor Name"
                 ></input>
                 {errors.vendorName && (
-                  <p className="text-red-600 text-sm pl-1">{errors.vendorName}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.vendorName.message}</p>
                 )}
               </div>
 
               <div className="w-1/3">
-                <label >Company Name</label> <br />
+                <label>Company Name</label> 
+                <br />
                 <input
                   type="text"
                   name="companyName"
-                  value={formData.companyName}
-                  onChange={handleChange}
+                  {...register("companyName")}
                   className="p-2 rounded-lg w-64"
                   placeholder="Enter Company Name"
                 />
                 {errors.companyName && (
-                  <p className="text-red-600 text-sm pl-1">{errors.companyName}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.companyName.message}</p>
                 )}
               </div>
               <div className="w-1/3">
-                <label >GST Number</label> <br />
+                <label>GST Number</label> <br />
                 <input
                   type="text"
                   name="gstNo"
-                  value={formData.gstNo}
-                  onChange={handleChange}
+                  {...register("gstNo")}
                   className="p-2 rounded-lg w-64"
                   placeholder="Enter GST number"
                 />
                 {errors.gstNo && (
-                  <p className="text-red-600 text-sm pl-1">{errors.gstNo}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.gstNo.message}</p>
                 )}
               </div>
             </div>
 
             <div className="flex justify-between pt-4">
               <div className="w-1/3">
-                <label >PAN Number</label> <br />
+                <label>PAN Number</label> <br />
                 <input
                   type="text"
                   name="panNo"
-                  value={formData.panNo}
-                  onChange={handleChange}
+                  {...register("panNo")}
                   className="p-2 rounded-lg w-64"
                   placeholder="Enter PAN number"
                   maxLength={10}
-
                 />
                 {errors.panNo && (
-                  <p className="text-red-600 text-sm pl-1">{errors.panNo}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.panNo.message}</p>
                 )}
               </div>
 
               <div className="w-1/3">
-                <label >Phone number</label> <br />
+                <label>Phone number</label> <br />
                 <input
                   type="text"
                   name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
+                  {...register("phoneNumber")}
                   className="p-2 rounded-lg w-64"
                   placeholder="Enter phone number"
-                  maxLength={10}
-                  pattern="\d*"
                 />
                 {errors.phoneNumber && (
-                  <p className="text-red-600 text-sm pl-1">
-                    {errors.phoneNumber}
-                  </p>
+                  <p className="text-red-600 text-sm pl-1">{errors.phoneNumber.message}</p>
                 )}
               </div>
+
               <div className="w-1/3">
-                <label >Email</label> <br />
+                <label>Email</label> <br />
                 <input
                   type="email"
                   name="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  {...register("email")}
                   className="p-2 rounded-lg w-64"
-                  placeholder="Enter Email id"
+                  placeholder="Enter Email"
                 />
                 {errors.email && (
-                  <p className="text-red-600 text-sm pl-1">{errors.email}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.email.message}</p>
                 )}
               </div>
             </div>
-            <div className="pt-4">
-              <label htmlFor="logoInput" className="bg-black p-2 hover:bg-white text-white hover:text-black w-36 h-8 rounded-lg cursor-pointer">
-                Select Logo
-              </label>
-              <input
-                id="logoInput"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </div>
-            <div className="bg-gradient-to-r from-neutral-700 to-neutral-400 p-2 rounded-lg mt-10 w-full">
-              <p className="text-center text-white stroke-black text-2xl font-bold">
-                ADDRESS
-              </p>
-            </div>
-            <div className="p-4 w-full pl-1 rounded-md">
-              <label className="pl-1">Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="p-2 rounded-lg w-full justify-center"
-                placeholder="Enter address"
-              >
-              </textarea>
-              {errors.address && (
-                <p className="text-red-600 text-sm pl-1">
-                  {errors.address}
-                </p>
-              )}
-            </div>
-            <div className="flex justify-between ml-1">
+
+            <div className="flex justify-between pt-4">
               <div className="w-1/3">
-                <label >City</label> <br />
+                <label>Address</label> <br />
+                <input
+                  type="text"
+                  name="address"
+                  {...register("address")}
+                  className="p-2 rounded-lg w-64"
+                  placeholder="Enter address"
+                />
+                {errors.address && (
+                  <p className="text-red-600 text-sm pl-1">{errors.address.message}</p>
+                )}
+              </div>
+
+              <div className="w-1/3">
+                <label>City</label> <br />
                 <input
                   type="text"
                   name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="p-2 rounded-lg"
-                  placeholder="Enter City Name"
+                  {...register("city")}
+                  className="p-2 rounded-lg w-64"
+                  placeholder="Enter City"
                 />
                 {errors.city && (
-                  <p className="text-red-600 text-sm pl-1">{errors.city}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.city.message}</p>
                 )}
               </div>
-              <div className=" mr-20">
+
+              <div className="w-1/3">
                 <label>Country</label> <br />
                 <select
                   name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="p-2 rounded-lg w-44"
+                  {...register("country")}
+                  className="p-2 rounded-lg w-64"
                 >
-                  <option value="">Select Country</option>
+                  <option value="">Select a country</option>
+                  <option value="India">India</option>
                   <option value="USA">USA</option>
                   <option value="Canada">Canada</option>
-                  <option value="India">India</option>
                 </select>
                 {errors.country && (
-                  <p className="text-red-600 text-sm pl-1">
-                    {errors.country}
-                  </p>
+                  <p className="text-red-600 text-sm pl-1">{errors.country.message}</p>
                 )}
               </div>
-              <div>
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <div className="w-1/3">
                 <label>State</label> <br />
                 <select
                   name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className="p-2 rounded-lg w-44"
+                  {...register("state")}
+                  className="p-2 rounded-lg w-64"
+                  disabled={!selectedCountry}
                 >
-                  <option value="">Select State</option>
-                  {formData.country && stateOptions[formData.country] && stateOptions[formData.country].map((state, index) => (
-                    <option key={index} value={state}>{state}</option>
-                  ))}
+                  <option value="">Select a state</option>
+                  {selectedCountry &&
+                    stateOptions[selectedCountry].map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
                 </select>
                 {errors.state && (
-                  <p className="text-red-600 text-sm pl-1">
-                    {errors.state}
-                  </p>
+                  <p className="text-red-600 text-sm pl-1">{errors.state.message}</p>
                 )}
               </div>
-            </div>
-            <div className="flex justify-between pt-4">
-              <div>
+
+              <div className="w-1/3">
                 <label>District</label> <br />
                 <select
                   name="district"
-                  value={formData.district}
-                  onChange={handleChange}
-                  className="p-2 rounded-lg w-44"
+                  {...register("district")}
+                  className="p-2 rounded-lg w-64"
+                  disabled={!selectedState}
                 >
-                  <option value="">Select District</option>
-                  {formData.state && districtOptions[formData.state] && districtOptions[formData.state].map((district, index) => (
-                    <option key={index} value={district}>{district}</option>
-                  ))}
+                  <option value="">Select a district</option>
+                  {selectedState &&
+                    districtOptions[selectedState]?.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
                 </select>
                 {errors.district && (
-                  <p className="text-red-600 text-sm pl-1">
-                    {errors.district}
-                  </p>
+                  <p className="text-red-600 text-sm pl-1">{errors.district.message}</p>
                 )}
               </div>
-              <div>
-                <label >PIN Code</label> <br />
+
+              <div className="w-1/3">
+                <label>Pin Code</label> <br />
                 <input
                   type="text"
                   name="pinCode"
-                  value={formData.pinCode}
-                  onChange={handleChange}
-                  className="p-2 rounded-lg"
-                  placeholder="Enter PIN Code"
-                ></input>
+                  {...register("pinCode")}
+                  className="p-2 rounded-lg w-64"
+                  placeholder="Enter pin code"
+                />
                 {errors.pinCode && (
-                  <p className="text-red-600 text-sm pl-1">{errors.pinCode}</p>
+                  <p className="text-red-600 text-sm pl-1">{errors.pinCode.message}</p>
                 )}
               </div>
-              <div>
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <div className="w-1/3">
                 <label>Vendor Type</label> <br />
-                <select
+                <input
+                  type="text"
                   name="vendorType"
-                  value={formData.vendorType}
-                  onChange={handleChange}
-                  className="p-2 rounded-lg w-auto"
-                >
-                  <option value="">Select Vendor</option>
-                  <option value="DISTRIBUTOR">DISTRIBUTOR</option>
-                  <option value="SUPPLIER">SUPPLIER</option>
-                  <option value="SERVICE PROVIDER">SERVICE PROVIDER</option>
-                </select>
+                  {...register("vendorType")}
+                  className="p-2 rounded-lg w-64"
+                  placeholder="Enter vendor type"
+                />
                 {errors.vendorType && (
-                  <p className="text-red-600 text-sm pl-1">
-                    {errors.vendorType}
-                  </p>
+                  <p className="text-red-600 text-sm pl-1">{errors.vendorType.message}</p>
+                )}
+              </div>
+
+              <div className="w-1/3">
+                <label>Vendor Logo</label> <br />
+                <input
+                  type="file"
+                  name="vendorLogo"
+                  onChange={handleImageChange}
+                  className="p-2 rounded-lg w-64"
+                />
+                {selectedImage && (
+                  <img src={selectedImage} alt="Selected" className="mt-2 w-16 h-16" />
                 )}
               </div>
             </div>
-            <div className=" p-2">
-              <button className="bg-black  hover:bg-white text-white hover:text-black w-36 p-1  rounded-lg cursor-pointer">
-                +  Assign Project
-              </button>
-            </div>
-            <div className="bg-gradient-to-r from-neutral-700 to-neutral-400 p-2 rounded-lg mt-10 w-full">
-              <p className="text-center text-white stroke-black text-2xl font-bold">
-                CONTACT DETAILS
-              </p>
-            </div>
-            <div className="p-2">
-              <div className="flex justify-between">
-                <div>
-                  <label >Contact Name</label> <br />
-                  <input
-                    type="text"
-                    name="contactname"
-                    // value={formData.contactInfo[{contactName}]}
-                    // onChange={handleChange}
-                    className="p-2 rounded-lg"
-                    placeholder="Enter Contact name"
-                  />
-                  {/* {errors.email && (
-                  <p className="text-red-600 text-sm pl-1">{errors.email}</p>
-                )} */}
-                </div>
-                <div>
-                  <label >Contact Phone</label> <br />
-                  <input
-                    type="text"
-                    name="contactPhone"
-                    // value={formData.contactInfo}
-                    // onChange={handleChange}
-                    className="p-2 rounded-lg"
-                    placeholder="Enter Contact Phone Number"
-                    maxLength={10}
-                  />
-                  {/* {errors.email && (
-                  <p className="text-red-600 text-sm pl-1">{errors.email}</p>
-                )} */}
-                </div>
-                <div>
-                  <label >Contact Email</label> <br />
-                  <input
-                    type="email"
-                    name="contactemail"
-                    // value={formData.contactInfo}
-                    // onChange={handleChange}
-                    className="p-2 rounded-lg"
-                    placeholder="Enter Contact email"
-                  />
-                  {/* {errors.email && (
-                  <p className="text-red-600 text-sm pl-1">{errors.email}</p>
-                )} */}
-                </div>
-                <div>
-                  <label >Designation</label> <br />
-                  <input
-                    type="text"
-                    name="designation"
-                    value={formData.designation}
-                    onChange={handleChange}
-                    className="p-2 rounded-lg"
-                    placeholder="Enter Designation"
-                  />
-                  {errors.designation && (
-                    <p className="text-red-600 text-sm pl-1">{errors.designation}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <div>
-                <input type="checkbox" />
-                <label>Is Primary Contact</label>
-              </div>
-              <div className=" ml-6">
-                <button className="bg-black  hover:bg-white text-white hover:text-black w-36  rounded-lg cursor-pointer"
-                  type="submit" onClick={handleSubmit}
-                >Add</button>
-              </div>
-            </div>
-            <div className="flex justify-evenly mt-3">
+
+            <div className="text-center pt-6">
               <button
-                className="bg-black hover:bg-white hover:text-black text-white w-36 h-8 rounded-lg"
-                type="submit" onClick={handleSubmit}
+                type="submit"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >
-                Save
-              </button>
-              <button
-                className="bg-black hover:bg-white hover:text-black text-white w-36 h-8 rounded-lg"
-                onClick={() => navigate("/vendors")}
-              >
-                Cancel
+                Create Vendor
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
-  )
-}
-export default VendorCreate
+  );
+};
+
+export default VendorCreate;
