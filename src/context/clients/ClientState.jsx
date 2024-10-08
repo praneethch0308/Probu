@@ -16,7 +16,7 @@ export class ContactInfo {
     orgId = '';
 }
 function ClientState(props) {
-    const host = "http://157.245.110.240:8080/ProBuServices";
+    const host =process.env.REACT_API_URL;
     const Clientsintial = [];
 
     const [clients, setClients] = useState(Clientsintial);

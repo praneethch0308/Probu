@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Mainnav from "../../components/Mainnav";
@@ -15,7 +15,7 @@ import ToastNotification from "../../components/ToastNotification";
 const ProjectUpdate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state: { project, id } } = location;
+  const { state: { project } } = location;
 
   const [toast, setToast] = useState({ message: '', type: '' });
 

@@ -35,7 +35,7 @@ export class TeamData {
 
 export const TeamState = ({ children }) => {
 
-  const baseUrl = "http://157.245.110.240:8080/ProBuServices";
+  const baseUrl = process.env.REACT_API_URL;
   const [teams, setTeams] = useState([]);
   const [initData,setInitData]= useState([]);
   const orgId = localStorage.getItem('orgId')

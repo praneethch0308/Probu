@@ -55,6 +55,7 @@ const VendorCreate = () => {
 
   const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
+  const host = process.env.REACT_API_URL;
 const accessToken=localStorage.getItem('token');
   const stateOptions = {
     USA: ["California", "Texas", "New York", "Florida", "Illinois"],
@@ -172,10 +173,14 @@ const accessToken=localStorage.getItem('token');
       console.log(VendorData);
 
       const response = await axios.post(
-        `http://157.245.110.240:8080/ProBuServices/vendor/create?access_token=${accessToken}`,
-        formData
+        `${host}/vendor/create?access_token=${accessToken}`,
+        formData, {
+          headers: {
+            'Content-Type':'multi-part/form-data'
+          },
+    
+        }
       );
-
       console.log(response.data);
       navigate("/vendors");
     } catch (error) {
@@ -365,7 +370,7 @@ const accessToken=localStorage.getItem('token');
               </div>
 
               <div className="w-1/3">
-                <label>District</label> <br />
+                <label>District</label> <br/>
                 <select
                   name="district"
                   {...register("district")}

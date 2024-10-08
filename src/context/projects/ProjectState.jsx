@@ -46,7 +46,7 @@ export class ProjectData {
 }
 export const ProjectProvider = ({ children }) => {
 
-  const baseUrl = "http://157.245.110.240:8080/ProBuServices";
+  const baseUrl = process.env.REACT_API_URL;
   const [projects, setProjects] = useState([]);
   const [initData,setInitData]= useState([]);
   const accessToken = localStorage.getItem('token');

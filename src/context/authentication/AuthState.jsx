@@ -48,7 +48,7 @@ const AuthProvider = ({ children }) => {
     const [redirectUrl, setRedirectUrl] = useState('');
 
     const history = useNavigate();
-    const host = "http://157.245.110.240:8080/ProBuServices";
+    const host = process.env.REACT_API_URL;
 
     const login = async (userName, password) => {
         const urlString = `${host}/oauth/token`;
@@ -90,11 +90,22 @@ const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('loggedUser');
-        setIsLoggedIn(false);
-        setCurrentUser(null);
-        history('/');
+        setTimeout(() => {
+            window.location.reload();
+            history('/');
+        }, 1000);
+        localStorage.removeItem('token');
+         localStorage.removeItem('username');
+         localStorage.removeItem('orgId');
+         localStorage.removeItem('loggedUser');
+         localStorage.removeItem('role');
+         localStorage.removeItem('currentUser');
+         localStorage.removeItem('userDetails');
+         localStorage.removeItem('loggedUser');
+         setIsLoggedIn(false);
+         setCurrentUser(null);
+      
+       
     };
 
     const getUserSecurityData = async (username,token) => {

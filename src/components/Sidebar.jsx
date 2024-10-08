@@ -100,7 +100,7 @@ const Sidebar = () => {
                         <TfiMenu className="text-white cursor-pointer text-2xl rounded-md absolute top-3 ml-2" onClick={handleToggle} />
                         <ul className="mt-10">
                             {menuItems[role].map((item) => (
-                                <li
+                                <li 
                                     key={item.path}
                                     className={`mt-4 p-2 gap-x-1 flex items-center hover:cursor-pointer hover:bg-neutral-600 ${selectedItem === item.path ? 'bg-neutral-700 ' : ''}`}
                                     onClick={() => handleItemClick(item)}

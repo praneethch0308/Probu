@@ -6,7 +6,7 @@ const UserContext = createContext();
 export const useUserContext = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
-  const baseUrl = "http://157.245.110.240:8080/ProBuServices";
+  const baseUrl =process.env.REACT_API_URL;
   const [users, setUsers] = useState([]);
   const[userData,setUserData]= useState();
 

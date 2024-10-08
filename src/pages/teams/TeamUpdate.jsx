@@ -37,6 +37,7 @@ function TeamUpdate() {
     const { TeamInitData, initData } = context;
     const statuses = initData?.statuses || [];
     const projects = initData?.projects || [];
+    const host = process.env.REACT_API_URL;
 
     useEffect(() => {
         if (localStorage.getItem('token')) {
@@ -113,7 +114,7 @@ function TeamUpdate() {
             console.log(teamData);
             const accessToken = localStorage.getItem("token");
             const response = await axios.post(
-                `http://157.245.110.240:8080/ProBuServices/team/update?access_token=${accessToken}`,
+                `${host}/team/update?access_token=${accessToken}`,
                 teamData
             );
 

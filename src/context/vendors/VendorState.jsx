@@ -37,7 +37,7 @@ export class ContactInfo {
   orgId = '';
 }
 const VendorState =(props)=>{
-    const host="http://157.245.110.240:8080/ProBuServices";
+    const host=process.env.REACT_API_URL;
     const Vendorsinitial = [];
     const[vendors,setVendors] = useState(Vendorsinitial);
     const [vendInit, setVenInit]= useState();

@@ -72,7 +72,7 @@ export class Note {
 
 
 const TaskState = (props) => {
-  const host = "http://157.245.110.240:8080/ProBuServices";
+  const host = process.env.REACT_API_URL;
   const TasksInitial = [];
 
   const [tasks, setTasks] = useState(TasksInitial);

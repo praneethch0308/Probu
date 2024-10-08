@@ -35,7 +35,7 @@ export class EmployeeUpdatedata {
   
   }
 const EmployeeState =(props)=>{
-    const host="http://157.245.110.240:8080/ProBuServices";
+    const host=process.env.REACT_API_URL;
    
     const[employees,setEmployees] = useState([]);
     const [initialData,setInitialData]=useState([]);
@@ -75,7 +75,7 @@ const EmployeeState =(props)=>{
       //     getEmployees();
       //   }
       // }, [employees]); 
-      const baseUrl = 'http://157.245.110.240:8080/ProBuServices/';
+      const baseUrl = process.env.REACT_API_URL;
 
        const getCustomUrl = (url) => {
           const accessToken = localStorage.getItem('token');

@@ -4,22 +4,13 @@ import { useAuth } from "../../context/authentication/AuthContext";
 
 const Signout = () => {
     const navigate= useNavigate();
-    const { setIsLoggedIn,setCurrentUser} = useAuth();
+    const { setIsLoggedIn,setCurrentUser,logout} = useAuth();
 
   return (
     <div>
        <MdLogout onClick={()=>{
-         localStorage.removeItem('token');
-         localStorage.removeItem('username');
-         localStorage.removeItem('orgId');
-         localStorage.removeItem('loggedUser');
-         localStorage.removeItem('role');
-         localStorage.removeItem('currentUser');
-         localStorage.removeItem('userDetails');
-         localStorage.removeItem('loggedUser');
-         setIsLoggedIn(false);
-         setCurrentUser(null);
-         navigate('/');
+        logout();
+        navigate('/');
        }} className="text-white w-8 h-8 hover:cursor-pointer"/>
     </div>
   )

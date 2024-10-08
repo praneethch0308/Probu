@@ -8,7 +8,7 @@ export class CountryList {
     country = '';
 }
 export const CountryProvider = ({ children }) => {
-    const baseUrl = "http://157.245.110.240:8080/ProBuServices";
+    const baseUrl = process.env.REACT_API_URL;
     const [countries, setCountries] = useState(new CountryList());
  
     const accessToken= localStorage.getItem('token');
