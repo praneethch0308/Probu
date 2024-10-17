@@ -10,7 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
     "@hookform/resolvers": "^3.4.2",
+    "@mui/icons-material": "^6.1.4",
+    "@mui/material": "^6.1.4",
+    "@mui/styled-engine-sc": "^6.1.4",
     "aos": "^2.3.4",
     "axios": "^1.7.2",
     "chart.js": "^4.4.3",
@@ -23,6 +28,7 @@
     "react-router-dom": "^6.23.1",
     "react-select": "^5.8.0",
     "react-toastify": "^10.0.5",
+    "styled-components": "^6.1.13",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },

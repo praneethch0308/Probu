@@ -69,25 +69,26 @@ const VendorCreate = () => {
       const vendorData = {
         vendor: {
           vendorName: data.vendName,
-          companyName: data.companyName,
           vendorCode: '',
-          vendLogoUrl: '',
-          phone: data.phone,
-          email: data.email,
-          gstNo: data.gstNo,
-          panNo: data.panNo,
+          vendLogoUrl: '', 
+          gstNo: data.gstNo,  
+          panNo: data.panNo, 
           address: data.address,
           city: data.city,
           district: data.district,
           state: data.state,
-          country: data.country,
-          pincode: data.pincode,
-          type: data.type,
+          pincode: data.pincode,  
+          type:'',                 
           status: true,
+          
         },
         contactInfo: data.contactInfo || [],
       };
-
+      const projectObjId=[];
+      selectedProjects.forEach(element => {
+       
+        vendorData.vendor.projectObjId.push(element.projId);
+    });
       console.log("Vendor Create Data:", vendorData);
 
       const formData = new FormData();

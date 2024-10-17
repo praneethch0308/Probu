@@ -6,26 +6,6 @@ import { z } from 'zod';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const ContactSchema = z.object({
-    contactName: z.string().min(1, "Contact name is required"),
-    contactPh: z.number().min(10, "Enter a valid mobile no").max(10),
-    contactEmail: z.string().email("Enter a valid Email"),
-    contactDesignation: z.string().min(1, "Enter a valid designation")
-})
-const ClientSchema = z.object({
-    clientName: z.string().min(1, "Client name is required"),
-    clientGstNo: z.string().min(15, "Enter valid GST No").max(15),
-    clientPanNo: z.string().min(10, "Enter a valid PAN No").max(10),
-    clientPh: z.number().min(10, "Enter a valid Mobile No").max(10),
-    clientAlt: z.number().min(10, "Enter a valid Mobile No").max(10),
-    clientEmail: z.string().email("Enter a valid Email"),
-    clientAltEmail: z.string().email("Enter a valid email"),
-    clientWebsite: z.string().url("Enter a valid url").optional(),
-    clientAddress: z.string().min(5, "Enter address"),
-    clientCity: z.string(),
-    clientPincode: z.number().min(6, "Enter a valid pincode").max(6),
-    contactInfo: z.array(ContactSchema).optional()
-})
 
 
 function ClientUpdate() {
@@ -57,7 +37,7 @@ function ClientUpdate() {
             const accessToken = localStorage.getItem("token");
 
             const response = await axios.post(
-                "http://157.245.110.240:8080/ProBuServices/client/update",
+                `${process.env.REACT_API_URL}/ProBuServices/client/update`,
                 validatedData,
                 {
                     headers: {

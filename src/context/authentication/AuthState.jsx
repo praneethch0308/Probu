@@ -48,7 +48,7 @@ const AuthProvider = ({ children }) => {
     const [redirectUrl, setRedirectUrl] = useState('');
 
     const history = useNavigate();
-    const host = process.env.REACT_API_URL;
+    const host =process.env.REACT_API_URL;
 
     const login = async (userName, password) => {
         const urlString = `${host}/oauth/token`;

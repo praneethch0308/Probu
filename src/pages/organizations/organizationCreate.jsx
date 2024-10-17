@@ -60,7 +60,7 @@ const OrganizationCreate = () => {
       const accessToken = localStorage.getItem("token");
 
       const response = await axios.post(
-        "http://157.245.110.240:8080/ProBuServices/org/createOrgImg",
+        `${process.env.REACT_API_URL}/org/createOrgImg`,
         validatedData,
         {
           headers: {

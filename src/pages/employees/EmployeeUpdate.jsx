@@ -25,10 +25,6 @@ const EmployeeUpdate = () => {
     const [selectedImage, setSelectedImage] = useState(null);
     const orgId = localStorage.getItem('orgId');
     const username = localStorage.getItem('loggedUser');
-  
-
-
-
     const navigate = useNavigate();
     const context = useContext(EmployeeContext);
     const { EmployeeInitData, initialData, empUpdate } = context;
@@ -37,7 +33,7 @@ const EmployeeUpdate = () => {
     const {
       state: { employee },
     } = location;
-    const host = "http://157.245.110.240:8080/ProBuServices";
+    const host = process.env.REACT_API_URL;
     const accessToken= localStorage.getItem('token');
     const {
       register,
@@ -55,8 +51,7 @@ const EmployeeUpdate = () => {
         Designation: employee?.designation || "", 
         Project: employee?.projects || 0, 
         TeamSelection: employee?.teams || 0, 
-        IsManager: employee?.IsManager || "", 
-              
+        IsManager: employee?.IsManager || "",           
       },
     });
   

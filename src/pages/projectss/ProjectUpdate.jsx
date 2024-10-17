@@ -38,7 +38,7 @@ const ProjectUpdate = () => {
       spentBudgetGst: project?.spentBudgetGst || 0
     },
   });
-  const host = "http://157.245.110.240:8080/ProBuServices";
+  const host = process.env.REACT_API_URL;
   const orgId= localStorage.getItem('orgId');
   const username= localStorage.getItem('loggedUser');
   useEffect(() => {

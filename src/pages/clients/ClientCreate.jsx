@@ -5,9 +5,10 @@ import { any, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ContactInfo } from "../../context/clients/ClientState";
 import { formatDate } from "date-fns";
+import CountryContext from "../../context/countries/CountryContext";
 
 const ContactSchema = z.object({
   contactName: z.string().min(1, "Contact name is required"),
@@ -34,12 +35,13 @@ const ClientSchema = z.object({
   clientCity: z.string(),
   clientPincode: z.string().min(6, "Enter a valid pincode"),
   contactInfo: z.array(ContactSchema).optional(),
-  clientImage: z.instanceof(FileList).nullable(), // For handling file uploads
+  clientImage: z.instanceof(FileList).nullable(), 
 });
 
 function ClientCreate() {
   const navigate = useNavigate();
-  const [imagePreview, setImagePreview] = useState(null); // State for image preview
+  const [imagePreview, setImagePreview] = useState(null);
+  const { countries, states, districts, getAllCountries, getAllStates, getAllDistricts } = useContext(CountryContext);
 
   const {
     register,
@@ -48,8 +50,7 @@ function ClientCreate() {
     formState: { errors },
     watch,
   } = useForm({
-    resolver: zodResolver(ClientSchema)
-    
+    resolver: zodResolver(ClientSchema),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -57,17 +58,35 @@ function ClientCreate() {
     name: "contactInfo",
   });
 
-  // Watch for file input change to handle image preview
   const clientImage = watch("clientImage");
-  if (clientImage && clientImage.length > 0) {
-    const file = clientImage[0];
-    const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result);
-    reader.readAsDataURL(file);
-  }
+  useEffect(() => {
+    if (clientImage && clientImage.length > 0) {
+      const file = clientImage[0];
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  }, [clientImage]);
 
-  const orgId = localStorage.getItem('orgId');
-  const username = localStorage.getItem('loggedUser');
+  useEffect(() => {
+    getAllCountries();
+  }, []);
+
+  useEffect(() => {
+    if (watch("clientCountry")) {
+      getAllStates(watch("clientCountry"));
+    }
+  }, [watch("clientCountry")]);
+
+  useEffect(() => {
+    if (watch("clientCountry") && watch("clientState")) {
+      getAllDistricts(watch("clientCountry"), watch("clientState"));
+    }
+  }, [watch("clientCountry"), watch("clientState")]);
+
+  const orgId = localStorage.getItem("orgId");
+  const username = localStorage.getItem("loggedUser");
+
 
   const onSubmit = async (data) => {
     try {
@@ -83,14 +102,13 @@ function ClientCreate() {
         clientCreateData.state = data.clientState;
         clientCreateData.country = data.clientCountry;
         clientCreateData.pincode = data.clientPincode;
-        clientCreateData.phoneNumber = data.clientPh
+        clientCreateData.phoneNumber = data.clientPh;
         clientCreateData.altPhoneNumber = data.clientAlt;
         clientCreateData.email = data.clientEmail;
         clientCreateData.altEmail = data.clientAltEmail;
         clientCreateData.website =  data.clientWebsite;
-        clientCreateData.registrationDate = formatDate(new Date(), 'yyyy-MM-dd', 'en');
+        clientCreateData.registrationDate = new Date().toISOString().split('T')[0],
         clientCreateData.orgId = orgId;
-
         const contactInfos = (data.contactInfo || []).map(contact => {
           const contactInfo = new ContactInfo();
           contactInfo.contactName = contact.contactName;
@@ -101,25 +119,19 @@ function ClientCreate() {
           contactInfo.orgId = orgId;
           return contactInfo;
         });
-    
-     
-       
         clientCreateData.contactInfos = contactInfos;
-        clientCreateData.userName = username;
-    
+        clientCreateData.userName = username;    
         const formData = new FormData();
         formData.append('clientCreateData', JSON.stringify(clientCreateData));
         
         if (data.clientImage && data.clientImage.length > 0) {
-          formData.append('clientImage', data.clientImage[0]);
-        }
-
-    
+          formData.append('logo', data.clientImage[0]);
+        }    
       console.log(formData);
       console.log(clientCreateData);
       console.log(contactInfos);
       const response = await axios.post(
-        `http://157.245.110.240:8080/ProBuServices/client/create?access_token=${accessToken}`,
+        `${process.env.REACT_API_URL}/client/create?access_token=${accessToken}`,
         formData,
         {
           headers: {
@@ -129,7 +141,7 @@ function ClientCreate() {
       );
 
       console.log(response.data);
-      navigate("/client");
+      navigate("/clients");
     } catch (error) {
       console.error("Error updating client:", error);
     }
@@ -150,9 +162,8 @@ function ClientCreate() {
           </div>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col space-y-4 mt-8 bg-neutral-300 p-5 rounded-md">
-              {/* Client Name, GST, PAN */}
               <div className="flex justify-between m-1">
-                <div className="w-1/3 pr-5">
+                <div className="w-1/3 pr-2">
                   <label className="text-black pl-1">Client Name</label>
                   <input
                     className="w-full p-3 rounded-md"
@@ -164,7 +175,7 @@ function ClientCreate() {
                     </p>
                   )}
                 </div>
-                <div className="w-1/3 pr-5">
+                <div className="w-1/3 pr-2">
                   <label className="text-black pl-1">Client GST No</label>
                   <input
                     className="w-full p-3 rounded-md"
@@ -190,9 +201,9 @@ function ClientCreate() {
                 </div>
               </div>
 
-              {/* Phone, Alt Phone, Email, Alt Email */}
+
               <div className="flex justify-between m-1">
-                <div className="w-1/4 pr-5">
+                <div className="w-1/4 pr-2">
                   <label className="text-black pl-1">Phone</label>
                   <input
                     className="w-full p-3 rounded-md"
@@ -204,7 +215,7 @@ function ClientCreate() {
                     </p>
                   )}
                 </div>
-                <div className="w-1/4 pr-5">
+                <div className="w-1/4 pr-2">
                   <label className="text-black pl-1">Alt Phone</label>
                   <input
                     className="w-full p-3 rounded-md"
@@ -216,7 +227,7 @@ function ClientCreate() {
                     </p>
                   )}
                 </div>
-                <div className="w-1/4 pr-5">
+                <div className="w-1/4 pr-2">
                   <label className="text-black pl-1">Email</label>
                   <input
                     className="w-full p-3 rounded-md"
@@ -272,42 +283,36 @@ function ClientCreate() {
 
               {/* Country, State, District, City */}
               <div className="flex justify-between m-1">
-                <div className="w-1/4 pr-5">
-                  <label className="text-black pl-1">Country</label>
-                  <input
-                    className="w-full p-3 rounded-md"
-                    {...register("clientCountry")}
-                  />
-                  {errors.clientCountry && (
-                    <p className="text-red-600 text-sm pl-8">
-                      {errors.clientCountry.message}
-                    </p>
-                  )}
-                </div>
-                <div className="w-1/4 pr-5">
-                  <label className="text-black pl-1">State</label>
-                  <input
-                    className="w-full p-3 rounded-md"
-                    {...register("clientState")}
-                  />
-                  {errors.clientState && (
-                    <p className="text-red-600 text-sm pl-8">
-                      {errors.clientState.message}
-                    </p>
-                  )}
-                </div>
-                <div className="w-1/4 pr-5">
-                  <label className="text-black pl-1">District</label>
-                  <input
-                    className="w-full p-3 rounded-md"
-                    {...register("clientDistrict")}
-                  />
-                  {errors.clientDistrict && (
-                    <p className="text-red-600 text-sm pl-8">
-                      {errors.clientDistrict.message}
-                    </p>
-                  )}
-                </div>
+              <div className="w-1/4 pr-2">
+            <label className="block text-gray-700">Country</label>
+            <select {...register("clientCountry")}  className="w-full p-3 border rounded-md">
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.country}>{country.country}</option>
+              ))}
+            </select>
+            {errors.clientCountry && <p className="text-red-600 text-sm">{errors.clientCountry.message}</p>}
+          </div>
+          <div className="w-1/4 pr-2">
+            <label className="block text-gray-700">State</label>
+            <select {...register("clientState")} className="w-full p-3 border rounded-md">
+              <option value="">Select State</option>
+              {states.map((state) => (
+                <option key={state.code} value={state.state}>{state.state}</option>
+              ))}
+            </select>
+            {errors.clientState && <p className="text-red-600 text-sm">{errors.clientState.message}</p>}
+          </div>
+          <div className="w-1/4 pr-2">
+            <label className="block text-gray-700">District</label>
+            <select {...register("clientDistrict")} className="w-full p-3 border rounded-md">
+              <option value="">Select District</option>
+              {districts.map((district) => (
+                <option key={district.code} value={district.district}>{district.district}</option>
+              ))}
+            </select>
+            {errors.clientDistrict && <p className="text-red-600 text-sm">{errors.clientDistrict.message}</p>}
+          </div>
                 <div className="w-1/4">
                   <label className="text-black pl-1">City</label>
                   <input
@@ -324,7 +329,7 @@ function ClientCreate() {
 
               {/* Pincode */}
               <div className="flex m-1">
-                <div className="w-full">
+                <div className="w-1/4">
                   <label className="text-black pl-1">Pincode</label>
                   <input
                     className="w-full p-3 rounded-md"

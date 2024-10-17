@@ -41,9 +41,7 @@ export const TeamState = ({ children }) => {
   const orgId = localStorage.getItem('orgId')
   const accessToken = localStorage.getItem('token');
   const getAllTeams = async () => {
-    try {
-
-   
+    try {  
       const response = await axios.get(`${baseUrl}/team/all/${orgId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`

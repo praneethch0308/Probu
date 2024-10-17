@@ -1,21 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import ProjectContext from "../../context/projects/ProjectsContext";
-import Mainnav from "../../components/Mainnav";
-import Sidebar from "../../components/Sidebar";
-import { MdOutlineFileDownload } from "react-icons/md";
-import { FaEye, FaPencilAlt, FaRegPlusSquare } from "react-icons/fa";
-import { useSidebar } from "../../context/sidebar/SidebarContext";
-import ExportToExcelButton from "../../components/ExcelButton";
+import { FaEye, FaPencilAlt } from "react-icons/fa";
 
-const Projects = () => {
+const ProjectsTable = ({ onSelectProjects, selectedProjects }) => {
   const context = useContext(ProjectContext);
-  const { projects, getAllProjects } = context;
-  const navigate = useNavigate();
+  const { projects,getAllProjects } = context;
   const [currentPage, setCurrentPage] = useState(1);
   const [projectsPerPage] = useState(3);
   const [searchQuery, setSearchQuery] = useState("");
-  const { isOpened } = useSidebar();
   useEffect(() => {
     if (localStorage.getItem("token")) {
       getAllProjects();
@@ -24,6 +16,14 @@ const Projects = () => {
     }
   }, []);
 
+
+  const handleSelectProject = (project) => {
+    if (selectedProjects.includes(project)) {
+      onSelectProjects(selectedProjects.filter((p) => p !== project));
+    } else {
+      onSelectProjects([...selectedProjects, project]);
+    }
+  };
   const indexOfLastProject = currentPage * projectsPerPage;
   const indexOfFirstProject = indexOfLastProject - projectsPerPage;
 
@@ -39,42 +39,17 @@ const Projects = () => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
 
-  const handleEditProject = (project) => {
-    navigate(`/project-update`, { state: { project } });
-  };
 
   return (
-    <>
-      <div className="pb-10">
-        <Mainnav />
-      </div>
-      <div>
-        <Sidebar />
-        <div
-          className={`content-transition ${
-            isOpened ? "sidebar-opened mr-5" : "sidebar-closed mr-5"
-          }`}
-        >
-          <div className="flex justify-end pt-14 pb-2">
-            <div className="flex space-x-4 items-center mr-2">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="p-3 rounded-2xl border-2 border-black"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-             <ExportToExcelButton tableId={"projects"}/>
-              <button
-                className="flex items-center bg-black text-white rounded-2xl p-3 font-semibold hover:bg-neutral-600"
-                onClick={() => navigate("/project-create")}
-              >
-                <FaRegPlusSquare className="h-6 w-6 mr-2" />
-                Create Project
-              </button>
-            </div>
-          </div>
-          <div className="pt-10">
+    <div className="p-4">
+      <input
+        type="text"
+        placeholder="Search..."
+        className="p-2 border rounded"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+                <div className="pt-10">
             <table id="projects" className={`w-full shadow-md cursor-pointer`}>
               <thead className="bg-black rounded-t-lg">
                 <tr>
@@ -154,10 +129,8 @@ const Projects = () => {
               </button>
             ))}
           </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 
-export default Projects;
+export default ProjectsTable;

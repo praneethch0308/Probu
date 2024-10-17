@@ -43,6 +43,7 @@ import TeamUpdate from './pages/teams/TeamUpdate'
 import VendorCreate2 from './pages/vendors/VendorCreate2'
 import { CountryProvider } from './context/countries/CountryState'
 import TaskUpdate from './pages/tasks/TaskUpdate'
+import ProjectsTable from './components/projects/ProjectsTable'
 
 
 function App() {

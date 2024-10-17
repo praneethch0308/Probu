@@ -135,12 +135,15 @@ const ProjectTask = () => {
                 <p className="pt-3">
                   <strong>Description:</strong> {project.projectDescription}
                 </p>
+                <p className="pt-3">
+                  <strong>Client:</strong> {project.clientObjId}
+                </p>
               </div>
 
               <div className="bg-white border-[2px] ml-5 mr-5 shadow-md rounded-3xl p-6 w-1/3">
                 <div className="flex justify-start">
                   <div><FaCalendar className="h-5 w-5"/></div>
-                <h2 className="text-xl font-bold -mt-1 ml-2 mb-4">Life</h2>
+                <h2 className="text-xl font-bold -mt-1 ml-2 mb-4">Project-Cycle</h2>
                   </div>
                 <p>
                   <strong>Start Date:</strong>{" "}
@@ -160,7 +163,7 @@ const ProjectTask = () => {
                 <div className="flex justify-between">
                 <div className="flex justify-normal">
                   <div><FaIndianRupeeSign className="h-5 w-5"/></div>
-                  <h2 className="text-xl font-bold -mt-1 mb-2  ml-3">Cost</h2>
+                  <h2 className="text-xl font-bold -mt-1 mb-2  ml-3">Planned Budget Details</h2>
                   </div>
                   <div className="cursor-pointer"><MdModeEditOutline /></div>
                 </div>

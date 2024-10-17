@@ -37,7 +37,7 @@ const UserDashboard = () => {
   const accessToken = localStorage.getItem('token');
 
   const loadData = (pageIndex, pageSize) => {
-    axios.get(`http://157.245.110.240:8080/ProBuServices/task/mgr/employees/${user.username}/${user.orgId}/${pageIndex}/${pageSize}`, {
+    axios.get(`${process.env.REACT_API_URL}/task/mgr/employees/${user.username}/${user.orgId}/${pageIndex}/${pageSize}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
@@ -50,7 +50,7 @@ const UserDashboard = () => {
   };
 
   const getUserTaskStatusNameAndCount = () => {
-    axios.get(`http://157.245.110.240:8080/ProBuServices/dashboard/mgr/${user.username}/${user.orgId}`, {
+    axios.get(`${process.env.REACT_API_URL}/dashboard/mgr/${user.username}/${user.orgId}`, {
       params: { username: user.username, orgId: user.orgId },
       headers: {
         Authorization: `Bearer ${accessToken}`
@@ -115,8 +115,8 @@ const UserDashboard = () => {
           </div>
         </div>
         <div className="w-1/2 ">
-          <div className="card  ">
-          <ul className="list-group mt-24   grid grid-cols-1 justify-center md:grid-cols-2  gap-4">
+          <div className="card">
+          <ul className="list-group mt-24 grid grid-cols-1 justify-center md:grid-cols-2  gap-4">
                 {taskStatuses.map(task => (
                 <li
                   key={task.statusName}

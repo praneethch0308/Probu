@@ -103,7 +103,7 @@ function TeamCreate() {
             console.log(teamData)
             const accessToken = localStorage.getItem("token");
             const response = await axios.post(
-                `http://157.245.110.240:8080/ProBuServices/team/create?access_token=${accessToken}`,
+                `${process.env.REACT_API_URL}/team/create?access_token=${accessToken}`,
                 teamData
                
             );

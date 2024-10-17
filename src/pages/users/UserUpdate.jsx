@@ -27,7 +27,7 @@ function UserUpdate() {
             const accessToken = localStorage.getItem("token");
 
             const response = await axios.post(
-                `http://157.245.110.240:8080/ProBuServices/user/update?access_token=${accessToken}`,
+                `${process.env.REACT_API_URL}/user/update?access_token=${accessToken}`,
                 formData,
                 {
                    
