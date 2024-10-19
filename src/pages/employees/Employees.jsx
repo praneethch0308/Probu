@@ -20,7 +20,7 @@ const {isOpened}= useSidebar();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const employeesPerPage = 3; // Number of employees to display per page
+  const employeesPerPage = 3; 
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => {
@@ -49,12 +49,10 @@ useEffect(()=>{
     Aos.init({ duration: 1000 });
   }, []);
 
-  // Get current employees
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
   const currentEmployees = employees.slice(indexOfFirstEmployee, indexOfLastEmployee);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
@@ -74,7 +72,6 @@ useEffect(()=>{
                   className="p-3 rounded-2xl border-2 border-black"
                 />
                <ExportToExcelButton  tableId="EmployeeTable"/>
-
                 <button className="flex items-center bg-black text-white rounded-2xl shadow-md p-3 font-semibold hover:bg-neutral-600" onClick={() => navigate('/employee-create')}>
                   <FaRegPlusSquare className="h-6 w-6 mr-2" />
                   Create Employee

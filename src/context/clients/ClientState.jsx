@@ -20,13 +20,14 @@ function ClientState(props) {
     const Clientsintial = [];
 
     const [clients, setClients] = useState(Clientsintial);
+    const [clientObj, setClientObj] = useState();
     const accessToken = localStorage.getItem("token");
     const [initData, setInitData]= useState([]);
     const orgId= localStorage.getItem("orgId")
 
     const ClientInitData= async()=>{
         try{
-          const response = await axios.get(`${baseUrl}/client/init/${orgId}`, {
+          const response = await axios.get(`${host}/client/init/${orgId}`, {
             headers: {
               Authorization: `Bearer ${accessToken}`
             }
@@ -58,11 +59,24 @@ function ClientState(props) {
         }
     }, []);
 
-    const CreateOrganization = () => {
-
+    const GetClientbyCode = async (code,orgId) => {
+        try{
+            const response = await axios.get(`${host}/client/${code}/${orgId}`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              }
+            });
+              setClientObj(response.data);
+              console.log(clientObj);
+              console.log(code);
+              console.log(orgId);
+      
+          } catch(error){
+      console.error(error);
+          }
     }
     return (
-        <ClientContext.Provider value={{ clients, getClients,ClientInitData, initData }}>
+        <ClientContext.Provider value={{ clients, getClients,ClientInitData, initData, clientObj, GetClientbyCode }}>
             {props.children}
         </ClientContext.Provider>
     );

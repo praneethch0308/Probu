@@ -49,7 +49,7 @@ const EmployeeUpdate = () => {
         phoneNumber: employee?.phoneNumber || "", 
         Email: employee?.email || "", 
         Designation: employee?.designation || "", 
-        Project: employee?.projects || 0, 
+        Project: employee?.projects || [], 
         TeamSelection: employee?.teams || 0, 
         IsManager: employee?.IsManager || "",           
       },

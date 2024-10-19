@@ -72,6 +72,7 @@ function ClientCreate() {
     getAllCountries();
   }, []);
 
+  
   useEffect(() => {
     if (watch("clientCountry")) {
       getAllStates(watch("clientCountry"));
@@ -288,7 +289,7 @@ function ClientCreate() {
             <select {...register("clientCountry")}  className="w-full p-3 border rounded-md">
               <option value="">Select Country</option>
               {countries.map((country) => (
-                <option key={country.code} value={country.country}>{country.country}</option>
+                <option key={country.id} value={country.country}>{country.country}</option>
               ))}
             </select>
             {errors.clientCountry && <p className="text-red-600 text-sm">{errors.clientCountry.message}</p>}
@@ -298,7 +299,7 @@ function ClientCreate() {
             <select {...register("clientState")} className="w-full p-3 border rounded-md">
               <option value="">Select State</option>
               {states.map((state) => (
-                <option key={state.code} value={state.state}>{state.state}</option>
+                <option key={state.id} value={state.state}>{state.state}</option>
               ))}
             </select>
             {errors.clientState && <p className="text-red-600 text-sm">{errors.clientState.message}</p>}
@@ -308,7 +309,7 @@ function ClientCreate() {
             <select {...register("clientDistrict")} className="w-full p-3 border rounded-md">
               <option value="">Select District</option>
               {districts.map((district) => (
-                <option key={district.code} value={district.district}>{district.district}</option>
+                <option key={district.id} value={district.district}>{district.district}</option>
               ))}
             </select>
             {errors.clientDistrict && <p className="text-red-600 text-sm">{errors.clientDistrict.message}</p>}
