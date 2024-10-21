@@ -72,6 +72,7 @@ useEffect(()=>{
                   className="p-3 rounded-2xl border-2 border-black"
                 />
                <ExportToExcelButton  tableId="EmployeeTable"/>
+
                 <button className="flex items-center bg-black text-white rounded-2xl shadow-md p-3 font-semibold hover:bg-neutral-600" onClick={() => navigate('/employee-create')}>
                   <FaRegPlusSquare className="h-6 w-6 mr-2" />
                   Create Employee

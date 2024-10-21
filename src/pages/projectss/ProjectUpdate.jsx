@@ -156,7 +156,7 @@ const ProjectUpdate = () => {
           </div>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="bg-neutral-300 p-4 rounded-lg mt-5 w-full"
+            className="bg-neutral-300 p-2 rounded-lg mt-5 w-full"
           >
             <div className="md:flex justify-between">
               <div className="mb-4 md:w-64 rounded-lg">
@@ -302,7 +302,7 @@ const ProjectUpdate = () => {
               </div>
             </div>
             <div className="md:flex justify-between">
-              <div className="mb-4 md:w-64 rounded-lg">
+              <div className="mb-4 md:w-1/4 rounded-lg">
                 <label className="block text-black" htmlFor="actualEndDate">Actual End Date</label>
                 <input
                   type="date"
@@ -312,7 +312,7 @@ const ProjectUpdate = () => {
                 />
                 {errors.actualEndDate && <p className="text-red-500">{errors.actualEndDate.message}</p>}
               </div>
-              <div className="mb-4 md:w-64 rounded-lg">
+              <div className="mb-4 md:w-1/4 rounded-lg">
                 <label className="block text-black" htmlFor="allocatedBudget">Allocated Budget</label>
                 <input
                   type="number"
@@ -322,7 +322,7 @@ const ProjectUpdate = () => {
                 />
                 {errors.allocatedBudget && <p className="text-red-500">{errors.allocatedBudget.message}</p>}
               </div>
-              <div className="mb-4 md:w-64 rounded-lg">
+              <div className="mb-4 md:w-1/4 rounded-lg">
                 <label className="block text-black" htmlFor="spentBudget">Spent Budget</label>
                 <input
                   type="number"
@@ -332,7 +332,7 @@ const ProjectUpdate = () => {
                 />
                 {errors.spentBudget && <p className="text-red-500">{errors.spentBudget.message}</p>}
               </div>
-              <div className="mb-4 md:w-64 rounded-lg">
+              <div className="mb-4 md:w-1/4 rounded-lg">
                 <label className="block text-black" htmlFor="spentBudgetGst">Spent Budget GST</label>
                 <input
                   type="number"

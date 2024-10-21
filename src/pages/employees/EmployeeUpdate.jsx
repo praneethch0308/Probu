@@ -113,19 +113,13 @@ const EmployeeUpdate = () => {
     
          
             }
-
-
-        
          catch (error) {
             console.error('Error creating employee:', error);
         }
     };
 
     useEffect(() => {
-        if (localStorage.getItem('token')) {
-       
-       
-        
+        if (localStorage.getItem('token')) { 
           EmployeeInitData();
         } else {
           navigate("/projects");
