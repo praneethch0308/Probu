@@ -130,7 +130,7 @@ const VendorCreate = () => {
             <p>VENDOR CREATE</p>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="bg-neutral-300 p-4 rounded-lg mt-5 w-full">
-            {/* Vendor Details */}
+       
             <div className="md:flex justify-between">
               <div className="mb-4 md:w-64 rounded-lg">
                 <label className="block text-black">Vendor Name</label>

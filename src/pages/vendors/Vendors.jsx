@@ -48,6 +48,8 @@ const Vendors = () => {
     setSelectedVendor(null);
   };
 
+  
+  
   return (
     <>
       <div className="pb-10">

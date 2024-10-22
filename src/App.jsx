@@ -71,6 +71,7 @@ function App() {
                         {/* <Route path='/project-create2' element={<ProjectCreate2 />} /> */}
                         {/* <Route path='/project-create3' element={<ProjectCreate3 />} /> */}
                         <Route path='/project-task' element={<ProjectTask />} />
+                        <Route path='/projects-comp' element={<ProjectsTable />} />
                         <Route path='/project-update' element={<ProjectUpdate />} />
                         <Route path='/clients' element={<Client />} />
                         <Route path='/client-create' element={<CreateClient />} />

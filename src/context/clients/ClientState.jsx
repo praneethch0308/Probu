@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import ClientContext from "./ClientContext";
 import axios from "axios";
 
-
 export class ContactInfo {
     id = '';
     contactName = '';
@@ -15,6 +14,7 @@ export class ContactInfo {
     orgObjId = '';
     orgId = '';
 }
+
 function ClientState(props) {
     const host =process.env.REACT_API_URL;
     const Clientsintial = [];

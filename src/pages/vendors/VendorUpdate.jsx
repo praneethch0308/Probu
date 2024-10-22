@@ -40,7 +40,7 @@ const Vendors = () => {
       <div className="pb-10">
         <Mainnav />
       </div>
-
+        
       <div>
         <Sidebar />
         <div className={`content-transition  ${isOpened ? "sidebar-opened mr-5" : "sidebar-closed mr-5"}`}>
