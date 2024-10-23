@@ -123,10 +123,11 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    const passwordUpdate = async (data) => {
+    const Chngepass = async (passwordData) => {
         try {
-            const response = await axios.post(`${host}/user/password/change?access_token=${accessToken}`, data);
+            const response = await axios.post(`${host}/user/password/change?access_token=${accessToken}`, passwordData);
             return response.data;
+           
         } catch (error) {
             console.error('Error updating password:', error);
             throw error;
@@ -149,7 +150,7 @@ const getAccessToken= ()=>{
                 login,
                 logout,
                 getUserSecurityData,
-                passwordUpdate,
+                Chngepass,
                 setRedirectUrl,
                 setIsLoggedIn,
                 setCurrentUser,

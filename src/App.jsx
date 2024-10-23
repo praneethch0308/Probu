@@ -44,6 +44,7 @@ import VendorCreate2 from './pages/vendors/VendorCreate2'
 import { CountryProvider } from './context/countries/CountryState'
 import TaskUpdate from './pages/tasks/TaskUpdate'
 import ProjectsTable from './components/projects/ProjectsTable'
+import ChangePassword from './components/auth/ChangePassword'
 
 
 function App() {
@@ -63,6 +64,7 @@ function App() {
                       <Routes>
                         <Route path='/' element={<Landing />} />
                         <Route path='/signin' element={<Signin />} />
+                        <Route path='/change-password' element={<ChangePassword />} />
                         <Route path='/home' element={<Home />} />
                         <Route path='/organizations' element={<Organizations />} />
                         <Route path='/organization-create' element={<OrganizationCreate />} />

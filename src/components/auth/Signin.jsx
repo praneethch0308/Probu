@@ -45,7 +45,7 @@ const Signin = () => {
           localStorage.setItem('orgId', orgId);
           localStorage.setItem('role', role);
             if(userSecurityData.firstLogin){
-              navigate('/chngpwd')
+              navigate('/change-password')
             }
             else{
               navigate('/home');

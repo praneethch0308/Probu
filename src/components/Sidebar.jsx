@@ -55,6 +55,15 @@ const menuItems = {
         { path: '/users', icon: FaPeopleLine, label: 'Users' },
         { path: '/vendors', icon: GrDocumentUser, label: 'Vendors' },
     ],
+    USER: [
+        { path: '/projects', icon: MdFeaturedPlayList, label: 'Projects' },
+        { path: '/tasks', icon: MdTask, label: 'Tasks' },
+        { path: '/clients', icon: IoPeople, label: 'Clients' },
+        { path: '/employees', icon: FaUsers, label: 'Employees' },
+        { path: '/teams', icon: FaPeopleLine, label: 'Teams' },
+        { path: '/users', icon: FaPeopleLine, label: 'Users' },
+        { path: '/vendors', icon: GrDocumentUser, label: 'Vendors' },
+    ],
 };
 
 const Sidebar = () => {

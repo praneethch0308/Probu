@@ -101,7 +101,7 @@ const VendorCreate = () => {
     vendorData.vendor.vendLogoUrl = "";
     vendorData.vendor.phone = data.phone;
     vendorData.vendor.email = data.email;
- vendorData.vendor.gstNo = data.gstNo;
+    vendorData.vendor.gstNo = data.gstNo;
     vendorData.vendor.panNo = data.panNo;
     vendorData.vendor.address = data.address;
     vendorData.vendor.city = data.city;
